@@ -1,0 +1,10 @@
+[package]
+name = "postgres-deriving-macros"
+version = "0.1.0"
+authors = ["Steven Fackler <sfackler@gmail.com>"]
+
+[lib]
+plugin = true
+
+[dependencies]
+postgres-deriving-codegen = { path = "../postgres-deriving-codegen" }
