@@ -8,12 +8,12 @@ use syntax::ext::base::SyntaxExtension;
 use syntax::feature_gate::AttributeType;
 use syntax::parse::token;
 
-mod enums;
+mod tosql;
 
 pub fn register(registry: &mut Registry) {
     registry.register_syntax_extension(
-        token::intern("derive_PgEnum"),
-        SyntaxExtension::MultiDecorator(Box::new(enums::expand_derive_pgenum)));
+        token::intern("derive_ToSql"),
+        SyntaxExtension::MultiDecorator(Box::new(tosql::expand)));
 
-    registry.register_attribute("pg".to_owned(), AttributeType::Normal);
+    registry.register_attribute("postgres".to_owned(), AttributeType::Normal);
 }

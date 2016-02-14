@@ -1,0 +1,11 @@
+[root]
+name = "postgres-derive-macros"
+version = "0.1.0"
+dependencies = [
+ "postgres-derive-codegen 0.1.0",
+]
+
+[[package]]
+name = "postgres-derive-codegen"
+version = "0.1.0"
+
