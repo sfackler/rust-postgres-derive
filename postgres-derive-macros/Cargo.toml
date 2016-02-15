@@ -8,3 +8,6 @@ plugin = true
 
 [dependencies]
 postgres-derive-codegen = { path = "../postgres-derive-codegen" }
+
+[dev-dependencies]
+postgres = "0.11"

@@ -1,4 +1,4 @@
-#![feature(rustc_private)]
+#![feature(rustc_private, quote)]
 
 extern crate rustc_plugin;
 extern crate syntax;
@@ -8,6 +8,8 @@ use syntax::ext::base::SyntaxExtension;
 use syntax::feature_gate::AttributeType;
 use syntax::parse::token;
 
+mod accepts;
+mod overrides;
 mod tosql;
 
 pub fn register(registry: &mut Registry) {
