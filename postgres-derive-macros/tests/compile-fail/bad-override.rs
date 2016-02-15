@@ -19,4 +19,3 @@ enum Foo {
 }
 
 fn main() {}
-

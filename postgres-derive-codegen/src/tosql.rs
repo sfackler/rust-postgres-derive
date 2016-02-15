@@ -16,7 +16,8 @@ pub fn expand(ctx: &mut ExtCtxt,
     let item = match *annotatable {
         Annotatable::Item(ref item) => item,
         _ => {
-            ctx.span_err(span, "#[derive(ToSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span,
+                         "#[derive(ToSql)] can only be applied to tuple structs and enums");
             return;
         }
     };
@@ -29,7 +30,8 @@ pub fn expand(ctx: &mut ExtCtxt,
     let to_sql_body = match item.node {
         ItemKind::Enum(ref def, _) => enum_to_sql_body(ctx, span, item.ident, def),
         _ => {
-            ctx.span_err(span, "#[derive(ToSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span,
+                         "#[derive(ToSql)] can only be applied to tuple structs and enums");
             return;
         }
     };
@@ -66,7 +68,8 @@ fn enum_to_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &EnumD
         match variant.node.data {
             VariantData::Unit(_) => {}
             _ => {
-                ctx.span_err(variant.span, "#[derive(ToSql)] can only be applied to C-like enums");
+                ctx.span_err(variant.span,
+                             "#[derive(ToSql)] can only be applied to C-like enums");
                 continue;
             }
         }

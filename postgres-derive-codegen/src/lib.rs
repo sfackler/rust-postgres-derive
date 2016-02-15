@@ -14,12 +14,10 @@ mod overrides;
 mod tosql;
 
 pub fn register(registry: &mut Registry) {
-    registry.register_syntax_extension(
-        token::intern("derive_ToSql"),
-        SyntaxExtension::MultiDecorator(Box::new(tosql::expand)));
-    registry.register_syntax_extension(
-        token::intern("derive_FromSql"),
-        SyntaxExtension::MultiDecorator(Box::new(fromsql::expand)));
+    registry.register_syntax_extension(token::intern("derive_ToSql"),
+                                       SyntaxExtension::MultiDecorator(Box::new(tosql::expand)));
+    registry.register_syntax_extension(token::intern("derive_FromSql"),
+                                       SyntaxExtension::MultiDecorator(Box::new(fromsql::expand)));
 
     registry.register_attribute("postgres".to_owned(), AttributeType::Normal);
 }

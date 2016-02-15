@@ -17,7 +17,8 @@ pub fn expand(ctx: &mut ExtCtxt,
     let item = match *annotatable {
         Annotatable::Item(ref item) => item,
         _ => {
-            ctx.span_err(span, "#[derive(FromSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span,
+                         "#[derive(FromSql)] can only be applied to tuple structs and enums");
             return;
         }
     };
@@ -30,7 +31,8 @@ pub fn expand(ctx: &mut ExtCtxt,
     let from_sql_body = match item.node {
         ItemKind::Enum(ref def, _) => enum_from_sql_body(ctx, span, item.ident, def),
         _ => {
-            ctx.span_err(span, "#[derive(FromSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span,
+                         "#[derive(FromSql)] can only be applied to tuple structs and enums");
             return;
         }
     };

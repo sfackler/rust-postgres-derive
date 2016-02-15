@@ -8,9 +8,7 @@ pub struct Overrides {
 }
 
 pub fn get_overrides(ctx: &mut ExtCtxt, attrs: &[Attribute]) -> Overrides {
-    let mut overrides = Overrides {
-        name: None,
-    };
+    let mut overrides = Overrides { name: None };
 
     for attr in attrs {
         if attr.check_name("postgres") {
