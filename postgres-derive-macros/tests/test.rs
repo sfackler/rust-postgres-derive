@@ -1,22 +1,19 @@
-#![feature(plugin, custom_derive)]
-#![plugin(postgres_derive_macros)]
+extern crate compiletest_rs as compiletest;
 
-#[macro_use]
-extern crate postgres;
+use std::path::PathBuf;
 
-#[derive(Debug, ToSql, FromSql)]
-enum Foo {
-    Bar,
-    Baz
+fn run_mode(mode: &'static str) {
+    let mut config = compiletest::default_config();
+    let cfg_mode = mode.parse().ok().expect("Invalid mode");
+
+    config.mode = cfg_mode;
+    config.target_rustcflags = Some("-L target/debug/".to_owned());
+    config.src_base = PathBuf::from(format!("tests/{}", mode));
+
+    compiletest::run_tests(&config);
 }
 
-#[derive(Debug, ToSql, FromSql)]
-#[postgres(name = "mood")]
-enum Mood {
-    #[postgres(name = "sad")]
-    Sad,
-    #[postgres(name = "ok")]
-    Ok,
-    #[postgres(name = "happy")]
-    Happy,
+#[test]
+fn compile_fail() {
+    run_mode("compile-fail");
 }

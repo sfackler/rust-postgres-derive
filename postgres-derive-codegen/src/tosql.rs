@@ -83,6 +83,6 @@ fn enum_to_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &EnumD
     quote_block!(ctx, {
         let s: &'static str = $match_;
         try!(::std::io::Write::write_all(out, s.as_bytes()));
-        ::std::result::Result::Ok(::postgres::types::IsNull::Yes)
+        ::std::result::Result::Ok(::postgres::types::IsNull::No)
     })
 }
