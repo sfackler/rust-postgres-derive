@@ -26,10 +26,8 @@ pub fn expand(ctx: &mut ExtCtxt,
 
     let accepts_body = accepts::enum_body(ctx, name);
 
-    let (to_sql_body, generics) = match item.node {
-        ItemKind::Enum(ref def, ref generics) => {
-            (enum_to_sql_body(ctx, span, item.ident, def), generics)
-        }
+    let to_sql_body = match item.node {
+        ItemKind::Enum(ref def, _) => enum_to_sql_body(ctx, span, item.ident, def),
         _ => {
             ctx.span_err(span, "#[derive(ToSql)] can only be applied to tuple structs and enums");
             return;
@@ -37,7 +35,6 @@ pub fn expand(ctx: &mut ExtCtxt,
     };
 
     let type_ = item.ident;
-    let where_clause = &generics.where_clause;
 
     let item = quote_item!(ctx,
         impl ::postgres::types::ToSql for $type_ {
@@ -47,11 +44,11 @@ pub fn expand(ctx: &mut ExtCtxt,
                 $accepts_body
             }
 
-            fn to_sql<W: ?Sized>(&self,
-                                 type_: &::postgres::types::Type,
-                                 out: &mut W,
-                                 _: &::postgres::types::SessionInfo)
-                                 -> ::postgres::Result<::postgres::types::IsNull>
+            fn to_sql<W: ?::std::marker::Sized>(&self,
+                                                _: &::postgres::types::Type,
+                                                out: &mut W,
+                                                _: &::postgres::types::SessionInfo)
+                                                -> ::postgres::Result<::postgres::types::IsNull>
                 where W: ::std::io::Write
             {
                 $to_sql_body
@@ -85,7 +82,7 @@ fn enum_to_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &EnumD
 
     quote_block!(ctx, {
         let s: &'static str = $match_;
-        try!(out.write_all(s.as_bytes()));
-        Ok(::postgres::types::IsNull::Yes)
+        try!(::std::io::Write::write_all(out, s.as_bytes()));
+        ::std::result::Result::Ok(::postgres::types::IsNull::Yes)
     })
 }

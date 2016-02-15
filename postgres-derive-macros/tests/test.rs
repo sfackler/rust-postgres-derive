@@ -4,13 +4,13 @@
 #[macro_use]
 extern crate postgres;
 
-#[derive(Debug, ToSql)]
+#[derive(Debug, ToSql, FromSql)]
 enum Foo {
     Bar,
     Baz
 }
 
-#[derive(Debug, ToSql)]
+#[derive(Debug, ToSql, FromSql)]
 #[postgres(name = "mood")]
 enum Mood {
     #[postgres(name = "sad")]
