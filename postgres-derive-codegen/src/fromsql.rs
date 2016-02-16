@@ -1,6 +1,6 @@
 use syntax::ext::base::{Annotatable, ExtCtxt};
 use syntax::codemap::Span;
-use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident};
+use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident, Ty};
 use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
@@ -26,10 +26,20 @@ pub fn expand(ctx: &mut ExtCtxt,
     let overrides = overrides::get_overrides(ctx, &item.attrs);
     let name = overrides.name.unwrap_or_else(|| item.ident.name.as_str());
 
-    let accepts_body = accepts::enum_body(ctx, name);
+    let (accepts_body, from_sql_body) = match item.node {
+        ItemKind::Enum(ref def, _) => {
+            (accepts::enum_body(ctx, name), enum_from_sql_body(ctx, span, item.ident, def))
+        }
+        ItemKind::Struct(VariantData::Tuple(ref fields, _), _) => {
+            if fields.len() != 1 {
+                ctx.span_err(span,
+                             "#[derive(FromSql)] can only be applied to one field tuple structs");
+                return;
+            }
+            let inner = &fields[0].node.ty;
 
-    let from_sql_body = match item.node {
-        ItemKind::Enum(ref def, _) => enum_from_sql_body(ctx, span, item.ident, def),
+            (domain_accepts_body(ctx, inner), domain_from_sql_body(ctx, item.ident, inner))
+        }
         _ => {
             ctx.span_err(span,
                          "#[derive(FromSql)] can only be applied to tuple structs and enums");
@@ -45,9 +55,9 @@ pub fn expand(ctx: &mut ExtCtxt,
                 $accepts_body
             }
 
-            fn from_sql<R>(_: &::postgres::types::Type,
+            fn from_sql<R>(_type: &::postgres::types::Type,
                            r: &mut R,
-                           _: &::postgres::types::SessionInfo)
+                           _info: &::postgres::types::SessionInfo)
                            -> ::postgres::Result<Self>
                 where R: ::std::io::Read
             {
@@ -57,6 +67,10 @@ pub fn expand(ctx: &mut ExtCtxt,
     );
 
     push(Annotatable::Item(item.unwrap()));
+}
+
+fn domain_accepts_body(ctx: &mut ExtCtxt, inner: &Ty) -> P<Block> {
+    quote_block!(ctx, { <$inner as ::postgres::types::FromSql>::accepts(type_) })
 }
 
 fn enum_from_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &EnumDef) -> P<Block> {
@@ -96,5 +110,11 @@ fn enum_from_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &Enu
         let mut $buf = ::std::string::String::new();
         try!(::std::io::Read::read_to_string(r, &mut $buf));
         $match_
+    })
+}
+
+fn domain_from_sql_body(ctx: &mut ExtCtxt, name: Ident, inner: &Ty) -> P<Block> {
+    quote_block!(ctx, {
+        <$inner as ::postgres::types::FromSql>::from_sql(_type, r, _info).map($name)
     })
 }
