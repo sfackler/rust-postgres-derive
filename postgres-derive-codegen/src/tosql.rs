@@ -114,6 +114,10 @@ fn enum_to_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &EnumD
 
 fn domain_to_sql_body(ctx: &mut ExtCtxt) -> P<Block> {
     quote_block!(ctx, {
-        ::postgres::types::ToSql::to_sql(&self.0, _type, out, _info)
+        let inner = match _type.kind() {
+            &::postgres::types::Kind::Domain(ref inner) => inner,
+            _ => unreachable!(),
+        };
+        ::postgres::types::ToSql::to_sql(&self.0, inner, out, _info)
     })
 }
