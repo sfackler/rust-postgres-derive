@@ -1,0 +1,8 @@
+language: rust
+sudo: false
+rust:
+- nightly
+  #- beta
+  #- 1.6.0
+script:
+- (test $TRAVIS_RUST_VERSION != "nightly" || cargo test --manifest-path=postgres-derive-macros/Cargo.toml)
