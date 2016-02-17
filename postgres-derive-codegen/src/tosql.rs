@@ -1,6 +1,6 @@
 use syntax::ext::base::{Annotatable, ExtCtxt};
 use syntax::codemap::Span;
-use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident, Ty, StructField, StructFieldKind};
+use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident, Ty, StructFieldKind};
 use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
@@ -54,7 +54,7 @@ pub fn expand(ctx: &mut ExtCtxt,
                                .collect::<Vec<_>>();
             let trait_ = quote_path!(ctx, ::postgres::types::ToSql);
             (accepts::composite_body(ctx, span, name, &fields, &trait_),
-             composite_to_sql_body(ctx, span, item.ident, &*fields))
+             composite_to_sql_body(ctx, span, &*fields))
         }
         _ => {
             ctx.span_err(span,
@@ -140,7 +140,6 @@ fn domain_to_sql_body(ctx: &mut ExtCtxt) -> P<Block> {
 
 fn composite_to_sql_body(ctx: &mut ExtCtxt,
                          span: Span,
-                         type_name: Ident,
                          fields: &[(InternedString, Ident, &Ty)])
                          -> P<Block> {
     let num_fields = fields.len();
@@ -148,17 +147,10 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
     let mut arms = fields.iter()
                          .map(|&(ref name, ref ident, _)| {
                              quote_arm!(ctx, $name => {
-                                 let r = try!(::postgres::types::ToSql::to_sql(&self.$ident,
-                                                                               field.type_(),
-                                                                               &mut buf,
-                                                                               _info));
-                                 match r {
-                                     ::postgres::types::IsNull::Yes => try!(write_be_i32(out, -1)),
-                                     ::postgres::types::IsNull::No => {
-                                         try!(write_be_i32(out, buf.len() as i32));
-                                         try!(::std::io::Write::write_all(out, &buf));
-                                     }
-                                 }
+                                 ::postgres::types::ToSql::to_sql(&self.$ident,
+                                                                  field.type_(),
+                                                                  &mut buf,
+                                                                  _info)
                              })
                          })
                          .collect::<Vec<_>>();
@@ -171,7 +163,7 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
                                    -> ::std::io::Result<()>
             where W: ::std::io::Write
         {
-            let buf = [(num >> 22) as u8, (num >> 16) as u8, (num >> 8) as u8, num as u8];
+            let buf = [(num >> 24) as u8, (num >> 16) as u8, (num >> 8) as u8, num as u8];
             w.write_all(&buf)
         }
 
@@ -185,7 +177,14 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
         let mut buf = vec![];
         for field in fields {
             try!(write_be_i32(out, field.type_().oid() as i32));
-            $match_
+            let r = $match_;
+            match try!(r) {
+                ::postgres::types::IsNull::Yes => try!(write_be_i32(out, -1)),
+                ::postgres::types::IsNull::No => {
+                    try!(write_be_i32(out, buf.len() as i32));
+                    try!(::std::io::Write::write_all(out, &buf));
+                }
+            }
             buf.clear();
         }
 

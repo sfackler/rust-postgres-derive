@@ -1,10 +1,10 @@
 use syntax::ext::base::{Annotatable, ExtCtxt};
 use syntax::codemap::Span;
-use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident, Ty};
+use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident, Ty, StructFieldKind};
 use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
-use syntax::parse::token;
+use syntax::parse::token::{self, InternedString};
 
 use overrides;
 use accepts;
@@ -39,6 +39,22 @@ pub fn expand(ctx: &mut ExtCtxt,
             let inner = &fields[0].node.ty;
 
             (domain_accepts_body(ctx, inner), domain_from_sql_body(ctx, item.ident, inner))
+        }
+        ItemKind::Struct(VariantData::Struct(ref fields, _), _) => {
+            let fields = fields.iter()
+                               .map(|field| {
+                                   let ident = match field.node.kind {
+                                       StructFieldKind::NamedField(ident, _) => ident,
+                                       _ => unreachable!(),
+                                   };
+                                   let overrides = overrides::get_overrides(ctx, &field.node.attrs);
+                                   let name = overrides.name.unwrap_or_else(|| ident.name.as_str());
+                                   (name, ident, &*field.node.ty)
+                               })
+                               .collect::<Vec<_>>();
+            let trait_ = quote_path!(ctx, ::postgres::types::FromSql);
+            (accepts::composite_body(ctx, span, name, &fields, &trait_),
+             composite_from_sql_body(ctx, span, item.ident, &*fields))
         }
         _ => {
             ctx.span_err(span,
@@ -116,5 +132,83 @@ fn enum_from_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &Enu
 fn domain_from_sql_body(ctx: &mut ExtCtxt, name: Ident, inner: &Ty) -> P<Block> {
     quote_block!(ctx, {
         <$inner as ::postgres::types::FromSql>::from_sql(_type, r, _info).map($name)
+    })
+}
+
+fn composite_from_sql_body(ctx: &mut ExtCtxt,
+                           span: Span,
+                           type_name: Ident,
+                           fields: &[(InternedString, Ident, &Ty)])
+                           -> P<Block> {
+    let mut declare_vars = vec![];
+    let mut arms = vec![];
+    let mut struct_fields = vec![];
+
+    for &(ref name, ref ident, _) in fields {
+        let var_name = token::str_to_ident(&format!("__{}", ident));
+
+        declare_vars.push(quote_stmt!(ctx, let mut $var_name = ::std::option::Option::None;));
+
+        arms.push(quote_arm!(ctx, $name => {
+            let value = if len < 0 {
+                try!(::postgres::types::FromSql::from_sql_null(field.type_(), _info))
+            } else {
+                let mut r = ::std::io::Read::take(::std::io::Read::by_ref(r), len as u64);
+                try!(::postgres::types::FromSql::from_sql(field.type_(), &mut r, _info))
+            };
+
+            $var_name = ::std::option::Option::Some(value);
+        }));
+
+        struct_fields.push(ctx.field_imm(span,
+                                         ident.clone(),
+                                         quote_expr!(ctx, $var_name.unwrap())));
+    }
+
+    arms.push(quote_arm!(ctx, _ => unreachable!(),));
+    let match_ = ctx.expr_match(span, quote_expr!(ctx, field.name()), arms);
+
+    let build_struct = ctx.expr_struct_ident(span, type_name, struct_fields);
+
+    quote_block!(ctx, {
+        fn read_be_i32<R>(r: &mut R) -> ::std::io::Result<i32> where R: ::std::io::Read {
+            let mut buf = [0; 4];
+            try!(::std::io::Read::read_exact(r, &mut buf));
+            let num = ((buf[0] as i32) << 24) | ((buf[1] as i32) << 16) | ((buf[2] as i32) << 8) | (buf[3] as i32);
+            ::std::result::Result::Ok(num)
+        }
+
+        let fields = match _type.kind() {
+            &::postgres::types::Kind::Composite(ref fields) => fields,
+            _ => unreachable!(),
+        };
+
+        let num_fields = try!(read_be_i32(r));
+        if num_fields as usize != fields.len() {
+            let err: ::std::boxed::Box<::std::error::Error
+                                       + ::std::marker::Sync
+                                       + ::std::marker::Send>
+                = format!("expected {} fields but saw {}", fields.len(), num_fields).into();
+            return ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+        }
+
+        $declare_vars;
+
+        for field in fields {
+            let oid = try!(read_be_i32(r)) as u32;
+            if oid != field.type_().oid() {
+                let err: ::std::boxed::Box<::std::error::Error
+                                           + ::std::marker::Sync
+                                           + ::std::marker::Send>
+                    = format!("expected OID {} but saw {}", field.type_().oid(), oid).into();
+                return ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+            }
+
+            let len = try!(read_be_i32(r));
+
+            $match_
+        }
+
+        ::std::result::Result::Ok($build_struct)
     })
 }
