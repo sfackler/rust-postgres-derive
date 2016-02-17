@@ -152,14 +152,7 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
         declare_vars.push(quote_stmt!(ctx, let mut $var_name = ::std::option::Option::None;));
 
         arms.push(quote_arm!(ctx, $name => {
-            let value = if len < 0 {
-                try!(::postgres::types::FromSql::from_sql_null(field.type_(), _info))
-            } else {
-                let mut r = ::std::io::Read::take(::std::io::Read::by_ref(r), len as u64);
-                try!(::postgres::types::FromSql::from_sql(field.type_(), &mut r, _info))
-            };
-
-            $var_name = ::std::option::Option::Some(value);
+            $var_name = ::std::option::Option::Some(try!(read_value(len, r, field.type_(), _info)));
         }));
 
         struct_fields.push(ctx.field_imm(span,
@@ -182,6 +175,22 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
                        | (buf[3] as i32);
             ::std::result::Result::Ok(num)
         };
+
+        fn read_value<R, T>(len: i32,
+                            r: &mut R,
+                            type_: &::postgres::types::Type,
+                            info: &::postgres::types::SessionInfo)
+                            -> ::postgres::Result<T>
+            where R: ::std::io::Read,
+                  T: ::postgres::types::FromSql
+        {
+            if len < 0 {
+                ::postgres::types::FromSql::from_sql_null(type_, info)
+            } else {
+                let mut r = ::std::io::Read::take(::std::io::Read::by_ref(r), len as u64);
+                ::postgres::types::FromSql::from_sql(type_, &mut r, info)
+            }
+        }
 
         let fields = match _type.kind() {
             &::postgres::types::Kind::Composite(ref fields) => fields,
