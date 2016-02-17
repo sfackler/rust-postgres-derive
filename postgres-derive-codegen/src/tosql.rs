@@ -158,14 +158,10 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
     let match_ = ctx.expr_match(span, quote_expr!(ctx, field.name()), arms);
 
     quote_block!(ctx, {
-        fn write_be_i32<W: ?Sized>(w: &mut W,
-                                   num: i32)
-                                   -> ::std::io::Result<()>
-            where W: ::std::io::Write
-        {
+        let write_be_i32 = |w: &mut W, num: i32| {
             let buf = [(num >> 24) as u8, (num >> 16) as u8, (num >> 8) as u8, num as u8];
             w.write_all(&buf)
-        }
+        };
 
         let fields = match _type.kind() {
             &::postgres::types::Kind::Composite(ref fields) => fields,

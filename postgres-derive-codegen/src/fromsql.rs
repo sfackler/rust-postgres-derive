@@ -173,7 +173,7 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
     let build_struct = ctx.expr_struct_ident(span, type_name, struct_fields);
 
     quote_block!(ctx, {
-        fn read_be_i32<R>(r: &mut R) -> ::std::io::Result<i32> where R: ::std::io::Read {
+        let read_be_i32 = |r: &mut R| -> ::std::io::Result<i32> {
             let mut buf = [0; 4];
             try!(::std::io::Read::read_exact(r, &mut buf));
             let num = ((buf[0] as i32) << 24)
@@ -181,7 +181,7 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
                        | ((buf[2] as i32) << 8)
                        | (buf[3] as i32);
             ::std::result::Result::Ok(num)
-        }
+        };
 
         let fields = match _type.kind() {
             &::postgres::types::Kind::Composite(ref fields) => fields,
