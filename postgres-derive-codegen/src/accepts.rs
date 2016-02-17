@@ -5,6 +5,6 @@ use syntax::parse::token::InternedString;
 
 pub fn enum_body(ctx: &mut ExtCtxt, name: InternedString) -> P<Block> {
     quote_block!(ctx, {
-        type_.name() == $name /*&& type_.kind() == &::postgres::types::Kind::Enum*/
+        type_.name() == $name && type_.kind() == &::postgres::types::Kind::Enum
     })
 }

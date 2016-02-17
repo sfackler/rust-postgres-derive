@@ -11,5 +11,5 @@ test = false
 postgres-derive-codegen = { path = "../postgres-derive-codegen" }
 
 [dev-dependencies]
-postgres = "0.11"
+postgres = { git = "https://github.com/sfackler/rust-postgres" }
 compiletest_rs = "0.0.11"
