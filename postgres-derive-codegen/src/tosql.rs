@@ -144,8 +144,6 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
                          span: Span,
                          fields: &[(InternedString, Ident, &Ty)])
                          -> P<Block> {
-    let num_fields = fields.len();
-
     let mut arms = fields.iter()
                          .map(|&(ref name, ref ident, _)| {
                              quote_arm!(ctx, $name => {
@@ -169,12 +167,12 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
             w.write_all(&buf)
         }
 
-        try!(write_be_i32(out, $num_fields as i32));
-
         let fields = match _type.kind() {
             &::postgres::types::Kind::Composite(ref fields) => fields,
             _ => unreachable!(),
         };
+
+        try!(write_be_i32(out, fields.len() as i32));
 
         let mut buf = vec![];
         for field in fields {
