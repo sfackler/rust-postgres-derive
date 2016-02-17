@@ -28,7 +28,8 @@ pub fn expand(ctx: &mut ExtCtxt,
 
     let (accepts_body, to_sql_body) = match item.node {
         ItemKind::Enum(ref def, _) => {
-            (accepts::enum_body(ctx, name), enum_to_sql_body(ctx, span, item.ident, def))
+            (accepts::enum_body(ctx, name),
+             enum_to_sql_body(ctx, span, item.ident, def))
         }
         ItemKind::Struct(VariantData::Tuple(ref fields, _), _) => {
             if fields.len() != 1 {
@@ -38,7 +39,8 @@ pub fn expand(ctx: &mut ExtCtxt,
             }
             let inner = &fields[0].node.ty;
 
-            (domain_accepts_body(ctx, name, inner), domain_to_sql_body(ctx))
+            (domain_accepts_body(ctx, name, inner),
+             domain_to_sql_body(ctx))
         }
         ItemKind::Struct(VariantData::Struct(ref fields, _), _) => {
             let fields = fields.iter()

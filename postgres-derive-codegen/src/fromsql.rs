@@ -28,7 +28,8 @@ pub fn expand(ctx: &mut ExtCtxt,
 
     let (accepts_body, from_sql_body) = match item.node {
         ItemKind::Enum(ref def, _) => {
-            (accepts::enum_body(ctx, name), enum_from_sql_body(ctx, span, item.ident, def))
+            (accepts::enum_body(ctx, name),
+             enum_from_sql_body(ctx, span, item.ident, def))
         }
         ItemKind::Struct(VariantData::Tuple(ref fields, _), _) => {
             if fields.len() != 1 {
@@ -38,7 +39,8 @@ pub fn expand(ctx: &mut ExtCtxt,
             }
             let inner = &fields[0].node.ty;
 
-            (domain_accepts_body(ctx, inner), domain_from_sql_body(ctx, item.ident, inner))
+            (domain_accepts_body(ctx, inner),
+             domain_from_sql_body(ctx, item.ident, inner))
         }
         ItemKind::Struct(VariantData::Struct(ref fields, _), _) => {
             let fields = fields.iter()
@@ -174,7 +176,10 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
         fn read_be_i32<R>(r: &mut R) -> ::std::io::Result<i32> where R: ::std::io::Read {
             let mut buf = [0; 4];
             try!(::std::io::Read::read_exact(r, &mut buf));
-            let num = ((buf[0] as i32) << 24) | ((buf[1] as i32) << 16) | ((buf[2] as i32) << 8) | (buf[3] as i32);
+            let num = ((buf[0] as i32) << 24)
+                       | ((buf[1] as i32) << 16)
+                       | ((buf[2] as i32) << 8)
+                       | (buf[3] as i32);
             ::std::result::Result::Ok(num)
         }
 
