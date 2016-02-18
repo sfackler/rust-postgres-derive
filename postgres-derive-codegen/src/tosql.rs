@@ -62,7 +62,7 @@ pub fn expand(ctx: &mut ExtCtxt,
                                              token::str_to_ident("types"),
                                              token::str_to_ident("ToSql"),
                                          ]);
-            (accepts::composite_body(ctx, span, name, &fields, &trait_),
+            (accepts::composite_body(ctx, name, &fields, &trait_),
              composite_to_sql_body(ctx, span, &*fields))
         }
         _ => {
