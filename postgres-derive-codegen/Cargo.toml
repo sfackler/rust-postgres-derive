@@ -2,5 +2,16 @@
 name = "postgres-derive-codegen"
 version = "0.1.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
+build = "build.rs"
+
+[features]
+default = ["with-syntex"]
+nightly = []
+with-syntex = ["syntex", "syntex_syntax"]
+
+[build-dependencies]
+syntex = { version = "0.28", optional = true }
 
 [dependencies]
+syntex = { version = "0.28", optional = true }
+syntex_syntax = { version = "0.28", optional = true }

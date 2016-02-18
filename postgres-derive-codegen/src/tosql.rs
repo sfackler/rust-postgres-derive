@@ -4,7 +4,7 @@ use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident, Ty, St
 use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
-use syntax::parse::token::InternedString;
+use syntax::parse::token::{self, InternedString};
 
 use overrides;
 use accepts;
@@ -54,7 +54,12 @@ pub fn expand(ctx: &mut ExtCtxt,
                                    (name, ident, &*field.node.ty)
                                })
                                .collect::<Vec<_>>();
-            let trait_ = quote_path!(ctx, ::postgres::types::ToSql);
+            let trait_ = ctx.path_global(span,
+                                         vec![
+                                             token::str_to_ident("postgres"),
+                                             token::str_to_ident("types"),
+                                             token::str_to_ident("ToSql"),
+                                         ]);
             (accepts::composite_body(ctx, span, name, &fields, &trait_),
              composite_to_sql_body(ctx, span, &*fields))
         }

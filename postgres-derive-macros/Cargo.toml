@@ -8,7 +8,7 @@ plugin = true
 test = false
 
 [dependencies]
-postgres-derive-codegen = { path = "../postgres-derive-codegen" }
+postgres-derive-codegen = { path = "../postgres-derive-codegen", default-features = false, features = ["nightly"] }
 
 [dev-dependencies]
 postgres = { git = "https://github.com/sfackler/rust-postgres" }

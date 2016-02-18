@@ -1,0 +1,3 @@
+#[derive(FromSql, ToSql, Debug, PartialEq)]
+#[postgres(name = "session_id")]
+struct SessionId(Vec<u8>);
