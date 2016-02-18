@@ -5,9 +5,36 @@ use syntax::codemap::Span;
 use syntax::ptr::P;
 use syntax::parse::token::InternedString;
 
-pub fn enum_body(ctx: &mut ExtCtxt, name: InternedString) -> P<Block> {
+pub fn enum_body(ctx: &mut ExtCtxt,
+                 name: InternedString,
+                 variants: &[(Ident, InternedString)])
+                 -> P<Block> {
+    let num_variants = variants.len();
+
+    let mut arms = variants.iter()
+                           .map(|&(_, ref variant)| quote_arm!(ctx, $variant => true,))
+                           .collect::<Vec<_>>();
+    arms.push(quote_arm!(ctx, _ => false,));
+
     quote_block!(ctx, {
-        type_.name() == $name && type_.kind() == &::postgres::types::Kind::Enum
+        if type_.name() != $name {
+            return false;
+        }
+
+        match type_.kind() {
+            &::postgres::types::Kind::Enum(ref variants) => {
+                if variants.len() != $num_variants {
+                    return false;
+                }
+
+                variants.iter().all(|variant| {
+                    match &**variant {
+                        $arms
+                    }
+                })
+            }
+            _ => false
+        }
     })
 }
 

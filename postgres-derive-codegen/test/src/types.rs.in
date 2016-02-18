@@ -1,3 +1,14 @@
 #[derive(FromSql, ToSql, Debug, PartialEq)]
 #[postgres(name = "session_id")]
 struct SessionId(Vec<u8>);
+
+#[derive(Debug, ToSql, FromSql, PartialEq)]
+#[postgres(name = "mood")]
+enum Mood {
+    #[postgres(name = "sad")]
+    Sad,
+    #[postgres(name = "ok")]
+    Ok,
+    #[postgres(name = "happy")]
+    Happy,
+}

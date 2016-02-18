@@ -22,11 +22,21 @@ pub fn test_type<T, S>(conn: &Connection, sql_type: &str, checks: &[(T, S)])
 }
 
 #[test]
-fn name_overrides() {
+fn domain() {
     let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
     conn.execute("CREATE DOMAIN pg_temp.session_id AS bytea CHECK(octet_length(VALUE) = 16);", &[])
         .unwrap();
 
     test_type(&conn, "session_id", &[(SessionId(b"0123456789abcdef".to_vec()),
                                       "'0123456789abcdef'")]);
+}
+
+#[test]
+fn enum_() {
+    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    conn.execute("CREATE TYPE pg_temp.mood AS ENUM ('sad', 'ok', 'happy')", &[]).unwrap();
+
+    test_type(&conn,
+              "mood",
+              &[(Mood::Sad, "'sad'"), (Mood::Ok, "'ok'"), (Mood::Happy, "'happy'")]);
 }

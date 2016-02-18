@@ -1,6 +1,6 @@
 use syntax::ext::base::{Annotatable, ExtCtxt};
 use syntax::codemap::Span;
-use syntax::ast::{MetaItem, ItemKind, EnumDef, Block, VariantData, Ident, Ty, StructFieldKind};
+use syntax::ast::{MetaItem, ItemKind, Block, VariantData, Ident, Ty, StructFieldKind};
 use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
@@ -8,6 +8,7 @@ use syntax::parse::token::{self, InternedString};
 
 use overrides;
 use accepts;
+use enums;
 
 pub fn expand(ctx: &mut ExtCtxt,
               span: Span,
@@ -28,8 +29,9 @@ pub fn expand(ctx: &mut ExtCtxt,
 
     let (accepts_body, from_sql_body) = match item.node {
         ItemKind::Enum(ref def, _) => {
-            (accepts::enum_body(ctx, name),
-             enum_from_sql_body(ctx, span, item.ident, def))
+            let variants = enums::get_variants(ctx, "FromSql", def);
+            (accepts::enum_body(ctx, name, &variants),
+             enum_from_sql_body(ctx, span, item.ident, &variants))
         }
         ItemKind::Struct(VariantData::Tuple(ref fields, _), _) => {
             if fields.len() != 1 {
@@ -96,22 +98,13 @@ fn domain_accepts_body(ctx: &mut ExtCtxt, inner: &Ty) -> P<Block> {
     quote_block!(ctx, { <$inner as ::postgres::types::FromSql>::accepts(type_) })
 }
 
-fn enum_from_sql_body(ctx: &mut ExtCtxt, span: Span, type_name: Ident, def: &EnumDef) -> P<Block> {
+fn enum_from_sql_body(ctx: &mut ExtCtxt,
+                      span: Span,
+                      type_name: Ident,
+                      variants: &[(Ident, InternedString)]) -> P<Block> {
     let mut arms = vec![];
 
-    for variant in &def.variants {
-        match variant.node.data {
-            VariantData::Unit(_) => {}
-            _ => {
-                ctx.span_err(variant.span,
-                             "#[derive(FromSql)] can only be applied to C-like enums");
-                continue;
-            }
-        }
-
-        let variant_name = variant.node.name;
-        let overrides = overrides::get_overrides(ctx, &variant.node.attrs);
-        let name = overrides.name.unwrap_or_else(|| variant.node.name.name.as_str());
+    for &(ref variant_name, ref name) in variants {
         arms.push(quote_arm!(ctx,
                              $name => ::std::result::Result::Ok($type_name :: $variant_name),));
     }
