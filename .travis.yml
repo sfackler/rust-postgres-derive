@@ -6,3 +6,4 @@ rust:
   #- 1.6.0
 script:
 - (test $TRAVIS_RUST_VERSION != "nightly" || env RUST_BACKTRACE=1 cargo test --manifest-path=postgres-derive-macros/Cargo.toml)
+- cargo test --manifest-path=postgres-derive-codegen/test/Cargo.toml
