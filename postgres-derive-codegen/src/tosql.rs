@@ -41,8 +41,7 @@ pub fn expand(ctx: &mut ExtCtxt,
             }
             let inner = &fields[0].node.ty;
 
-            (domain_accepts_body(ctx, name, inner),
-             domain_to_sql_body(ctx))
+            (domain_accepts_body(ctx, name, inner), domain_to_sql_body(ctx))
         }
         ItemKind::Struct(VariantData::Struct(ref fields, _), _) => {
             let fields = fields.iter()
