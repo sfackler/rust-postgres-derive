@@ -8,6 +8,7 @@ repository = "https://github.com/sfackler/rust-postgres-derive"
 readme = "../README.md"
 keywords = ["database", "postgres", "postgresql", "sql"]
 build = "build.rs"
+exclude = ["test"]
 
 [features]
 default = ["with-syntex"]
