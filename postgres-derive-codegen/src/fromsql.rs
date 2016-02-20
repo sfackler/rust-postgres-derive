@@ -56,12 +56,7 @@ pub fn expand(ctx: &mut ExtCtxt,
                                    (name, ident, &*field.node.ty)
                                })
                                .collect::<Vec<_>>();
-            let trait_ = ctx.path_global(span,
-                                         vec![
-                                             token::str_to_ident("postgres"),
-                                             token::str_to_ident("types"),
-                                             token::str_to_ident("FromSql"),
-                                         ]);
+            let trait_ = quote_path!(ctx, ::postgres::types::FromSql);
             (accepts::composite_body(ctx, name, &fields, &trait_),
              composite_from_sql_body(ctx, span, item.ident, &*fields))
         }
