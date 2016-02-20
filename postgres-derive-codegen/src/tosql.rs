@@ -154,7 +154,7 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
     quote_block!(ctx, {
         let write_be_i32 = |w: &mut W, num: i32| {
             let buf = [(num >> 24) as u8, (num >> 16) as u8, (num >> 8) as u8, num as u8];
-            w.write_all(&buf)
+            ::std::io::Write::write_all(w, &buf)
         };
 
         let fields = match _type.kind() {
