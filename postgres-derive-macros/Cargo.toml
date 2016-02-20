@@ -13,7 +13,7 @@ plugin = true
 test = false
 
 [dependencies]
-postgres-derive-codegen = { path = "../postgres-derive-codegen", default-features = false, features = ["nightly"] }
+postgres-derive-codegen = { version = "0.1", path = "../postgres-derive-codegen", default-features = false, features = ["nightly"] }
 
 [dev-dependencies]
 postgres = "0.11.3"
