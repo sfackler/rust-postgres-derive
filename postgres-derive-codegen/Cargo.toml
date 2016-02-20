@@ -1,0 +1,23 @@
+[package]
+name = "postgres-derive-codegen"
+version = "0.1.0"
+authors = ["Steven Fackler <sfackler@gmail.com>"]
+license = "MIT/Apache-2.0"
+description = "Deriving codegen support for Postgres enum, domain, and composite types"
+repository = "https://github.com/sfackler/rust-postgres-derive"
+readme = "../README.md"
+keywords = ["database", "postgres", "postgresql", "sql"]
+build = "build.rs"
+exclude = ["test"]
+
+[features]
+default = ["with-syntex"]
+nightly = []
+with-syntex = ["syntex", "syntex_syntax"]
+
+[build-dependencies]
+syntex = { version = "0.29", optional = true }
+
+[dependencies]
+syntex = { version = "0.29", optional = true }
+syntex_syntax = { version = "0.29", optional = true }
