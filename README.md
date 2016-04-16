@@ -56,7 +56,7 @@ build = "build.rs"
 
 [build-dependencies]
 postgres-derive-codegen = "0.1"
-syntex = "0.29"
+syntex = "0.31"
 
 [dependencies]
 postgres = "0.11.3"
