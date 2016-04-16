@@ -1,6 +1,6 @@
 use syntax::ext::base::{Annotatable, ExtCtxt};
 use syntax::codemap::Span;
-use syntax::ast::{MetaItem, ItemKind, Block, VariantData, Ident, Ty, StructFieldKind};
+use syntax::ast::{MetaItem, ItemKind, Block, VariantData, Ident, Ty};
 use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
@@ -39,20 +39,17 @@ pub fn expand(ctx: &mut ExtCtxt,
                              "#[derive(FromSql)] can only be applied to one field tuple structs");
                 return;
             }
-            let inner = &fields[0].node.ty;
+            let inner = &fields[0].ty;
 
             (domain_accepts_body(ctx, inner), domain_from_sql_body(ctx, item.ident, inner))
         }
         ItemKind::Struct(VariantData::Struct(ref fields, _), _) => {
             let fields = fields.iter()
                                .map(|field| {
-                                   let ident = match field.node.kind {
-                                       StructFieldKind::NamedField(ident, _) => ident,
-                                       _ => unreachable!(),
-                                   };
-                                   let overrides = overrides::get_overrides(ctx, &field.node.attrs);
+                                   let ident = field.ident.unwrap();
+                                   let overrides = overrides::get_overrides(ctx, &field.attrs);
                                    let name = overrides.name.unwrap_or_else(|| ident.name.as_str());
-                                   (name, ident, &*field.node.ty)
+                                   (name, ident, &*field.ty)
                                })
                                .collect::<Vec<_>>();
             let trait_ = quote_path!(ctx, ::postgres::types::FromSql);
