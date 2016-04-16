@@ -1,6 +1,6 @@
 [package]
 name = "postgres-derive-macros"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "Deriving macro support for Postgres enum, domain, and composite types"
@@ -13,8 +13,8 @@ plugin = true
 test = false
 
 [dependencies]
-postgres-derive-codegen = { version = "0.1", path = "../postgres-derive-codegen", default-features = false, features = ["nightly"] }
+postgres-derive-codegen = { version = "0.1.2", path = "../postgres-derive-codegen", default-features = false, features = ["nightly"] }
 
 [dev-dependencies]
 postgres = "0.11.3"
-compiletest_rs = "0.0.11"
+compiletest_rs = "0.1"
