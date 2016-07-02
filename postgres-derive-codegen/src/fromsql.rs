@@ -184,11 +184,8 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
 
         let num_fields = try!(read_be_i32(r));
         if num_fields as usize != fields.len() {
-            let err: ::std::boxed::Box<::std::error::Error
-                                       + ::std::marker::Sync
-                                       + ::std::marker::Send>
-                = format!("expected {} fields but saw {}", fields.len(), num_fields).into();
-            return ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+            return ::std::result::Result::Err(::postgres::error::Error::Conversion(
+                    format!("expected {} fields but saw {}", fields.len(), num_fields).into()));
         }
 
         $declare_vars;
@@ -196,11 +193,8 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
         for field in fields {
             let oid = try!(read_be_i32(r)) as u32;
             if oid != field.type_().oid() {
-                let err: ::std::boxed::Box<::std::error::Error
-                                           + ::std::marker::Sync
-                                           + ::std::marker::Send>
-                    = format!("expected OID {} but saw {}", field.type_().oid(), oid).into();
-                return ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+                return ::std::result::Result::Err(::postgres::error::Error::Conversion(
+                        format!("expected OID {} but saw {}", field.type_().oid(), oid).into()));
             }
 
             let len = try!(read_be_i32(r));
