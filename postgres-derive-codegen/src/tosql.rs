@@ -166,7 +166,13 @@ fn composite_to_sql_body(ctx: &mut ExtCtxt,
             match try!(r) {
                 ::postgres::types::IsNull::Yes => try!(write_be_i32(out, -1)),
                 ::postgres::types::IsNull::No => {
-                    try!(write_be_i32(out, buf.len() as i32));
+                    let len = if buf.len() > i32::max_value() as usize {
+                        return ::std::result::Result::Err(::postgres::error::Error::Conversion(
+                                "value too large to transmit".into()));
+                    } else {
+                        buf.len() as i32
+                    };
+                    try!(write_be_i32(out, len));
                     try!(::std::io::Write::write_all(out, &buf));
                 }
             }
