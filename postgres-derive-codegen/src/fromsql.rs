@@ -100,11 +100,8 @@ fn enum_from_sql_body(ctx: &mut ExtCtxt,
     }
 
     arms.push(quote_arm!(ctx, v => {
-        let err: ::std::boxed::Box<::std::error::Error
-                                   + ::std::marker::Sync
-                                   + ::std::marker::Send>
-            = format!("unknown variant `{}`", v).into();
-        ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+        ::std::result::Result::Err(::postgres::error::Error::Conversion(
+                format!("unknown variant `{}`", v).into()))
     }));
 
     let buf = token::str_to_ident("buf");
