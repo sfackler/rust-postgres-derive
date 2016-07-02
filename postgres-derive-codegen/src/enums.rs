@@ -12,7 +12,7 @@ pub fn get_variants(ctx: &mut ExtCtxt, trait_: &str, def: &EnumDef) -> Vec<(Iden
             VariantData::Unit(_) => {}
             _ => {
                 ctx.span_err(variant.span,
-                             &format!("#[derive({})] can only be applied to C-like enums", trait_));
+                             &format!("#[derive({})] does not support non-C-like enums", trait_));
                 continue;
             }
         }

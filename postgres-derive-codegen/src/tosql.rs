@@ -17,8 +17,8 @@ pub fn expand(ctx: &mut ExtCtxt,
     let item = match *annotatable {
         Annotatable::Item(ref item) => item,
         _ => {
-            ctx.span_err(span,
-                         "#[derive(ToSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span, "#[derive(ToSql)] can only be applied to structs, single field \
+                                tuple structs, and enums");
             return;
         }
     };
@@ -34,8 +34,8 @@ pub fn expand(ctx: &mut ExtCtxt,
         }
         ItemKind::Struct(VariantData::Tuple(ref fields, _), _) => {
             if fields.len() != 1 {
-                ctx.span_err(span,
-                             "#[derive(ToSql)] can only be applied to one field tuple structs");
+                ctx.span_err(span, "#[derive(ToSql)] can only be applied to structs, single field \
+                                    tuple structs, and enums");
                 return;
             }
             let inner = &fields[0].ty;
@@ -56,8 +56,8 @@ pub fn expand(ctx: &mut ExtCtxt,
              composite_to_sql_body(ctx, span, &*fields))
         }
         _ => {
-            ctx.span_err(span,
-                         "#[derive(ToSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span, "#[derive(ToSql)] can only be applied to structs, single field \
+                                tuple structs, and enums");
             return;
         }
     };
