@@ -1,7 +1,6 @@
 use syntax::ext::base::{Annotatable, ExtCtxt};
 use syntax::codemap::Span;
 use syntax::ast::{MetaItem, ItemKind, Block, VariantData, Ident, Ty};
-use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
 use syntax::parse::token::{self, InternedString};
