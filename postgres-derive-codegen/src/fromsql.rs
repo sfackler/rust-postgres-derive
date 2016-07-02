@@ -1,7 +1,6 @@
 use syntax::ext::base::{Annotatable, ExtCtxt};
 use syntax::codemap::Span;
 use syntax::ast::{MetaItem, ItemKind, Block, VariantData, Ident, Ty};
-use syntax::attr::AttrMetaMethods;
 use syntax::ptr::P;
 use syntax::ext::build::AstBuilder;
 use syntax::parse::token::{self, InternedString};
@@ -18,8 +17,8 @@ pub fn expand(ctx: &mut ExtCtxt,
     let item = match *annotatable {
         Annotatable::Item(ref item) => item,
         _ => {
-            ctx.span_err(span,
-                         "#[derive(FromSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span, "#[derive(FromSql)] can only be applied to structs, single field \
+                                tuple structs, and enums");
             return;
         }
     };
@@ -35,8 +34,8 @@ pub fn expand(ctx: &mut ExtCtxt,
         }
         ItemKind::Struct(VariantData::Tuple(ref fields, _), _) => {
             if fields.len() != 1 {
-                ctx.span_err(span,
-                             "#[derive(FromSql)] can only be applied to one field tuple structs");
+                ctx.span_err(span, "#[derive(FromSql)] can only be applied to structs, single \
+                                    field tuple structs, and enums");
                 return;
             }
             let inner = &fields[0].ty;
@@ -57,8 +56,8 @@ pub fn expand(ctx: &mut ExtCtxt,
              composite_from_sql_body(ctx, span, item.ident, &*fields))
         }
         _ => {
-            ctx.span_err(span,
-                         "#[derive(FromSql)] can only be applied to tuple structs and enums");
+            ctx.span_err(span, "#[derive(FromSql)] can only be applied to structs, single field \
+                                tuple structs, and enums");
             return;
         }
     };
@@ -101,11 +100,8 @@ fn enum_from_sql_body(ctx: &mut ExtCtxt,
     }
 
     arms.push(quote_arm!(ctx, v => {
-        let err: ::std::boxed::Box<::std::error::Error
-                                   + ::std::marker::Sync
-                                   + ::std::marker::Send>
-            = format!("unknown variant `{}`", v).into();
-        ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+        ::std::result::Result::Err(::postgres::error::Error::Conversion(
+                format!("unknown variant `{}`", v).into()))
     }));
 
     let buf = token::str_to_ident("buf");
@@ -188,11 +184,8 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
 
         let num_fields = try!(read_be_i32(r));
         if num_fields as usize != fields.len() {
-            let err: ::std::boxed::Box<::std::error::Error
-                                       + ::std::marker::Sync
-                                       + ::std::marker::Send>
-                = format!("expected {} fields but saw {}", fields.len(), num_fields).into();
-            return ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+            return ::std::result::Result::Err(::postgres::error::Error::Conversion(
+                    format!("expected {} fields but saw {}", fields.len(), num_fields).into()));
         }
 
         $declare_vars;
@@ -200,11 +193,8 @@ fn composite_from_sql_body(ctx: &mut ExtCtxt,
         for field in fields {
             let oid = try!(read_be_i32(r)) as u32;
             if oid != field.type_().oid() {
-                let err: ::std::boxed::Box<::std::error::Error
-                                           + ::std::marker::Sync
-                                           + ::std::marker::Send>
-                    = format!("expected OID {} but saw {}", field.type_().oid(), oid).into();
-                return ::std::result::Result::Err(::postgres::error::Error::Conversion(err))
+                return ::std::result::Result::Err(::postgres::error::Error::Conversion(
+                        format!("expected OID {} but saw {}", field.type_().oid(), oid).into()));
             }
 
             let len = try!(read_be_i32(r));

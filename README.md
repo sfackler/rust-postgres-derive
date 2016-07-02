@@ -5,7 +5,7 @@
 Syntax extensions to automatically derive `FromSql` and `ToSql` implementations for Postgres enum,
 domain, and composite types.
 
-The generated code requires rust-postgres 0.11.3 or higher and Rust 1.6.0 or higher.
+The generated code requires rust-postgres 0.11.3 or higher and Rust 1.8.0 or higher.
 
 # Usage
 
@@ -46,7 +46,7 @@ pub enum Mood {
 
 ## Stable
 
-Use `syntex` along with `postgres-derive-codegen` in a build script:
+Use `postgres-derive-codegen` in a build script:
 
 Cargo.toml
 ```toml
@@ -56,7 +56,6 @@ build = "build.rs"
 
 [build-dependencies]
 postgres-derive-codegen = "0.1"
-syntex = "0.29"
 
 [dependencies]
 postgres = "0.11.3"
@@ -64,7 +63,6 @@ postgres = "0.11.3"
 
 build.rs
 ```rust
-extern crate syntex;
 extern crate postgres_derive_codegen;
 
 use std::env;
@@ -72,13 +70,10 @@ use std::path::Path;
 
 pub fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
-    let mut registry = syntex::Registry::new();
-    postgres_derive_codegen::register(&mut registry);
-
     let src = Path::new("src/types.rs.in");
     let dst = Path::new(&out_dir).join("types.rs");
 
-    registry.expand("", &src, &dst).unwrap();
+    postgres_derive_codegen::expand(src, dst).unwrap();
 }
 ```
 
