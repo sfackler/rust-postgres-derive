@@ -19,5 +19,5 @@ with-syntex = ["syntex", "syntex_syntax"]
 syntex = { version = "0.36", optional = true }
 
 [dependencies]
-syntex = { version = "0.36", optional = true }
-syntex_syntax = { version = "0.36", optional = true }
+syntex = { version = "0.44", optional = true }
+syntex_syntax = { version = "0.44", optional = true }
