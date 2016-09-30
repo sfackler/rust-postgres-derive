@@ -16,7 +16,7 @@ nightly = []
 with-syntex = ["syntex", "syntex_syntax"]
 
 [build-dependencies]
-syntex = { version = "0.36", optional = true }
+syntex = { version = "0.44", optional = true }
 
 [dependencies]
 syntex = { version = "0.44", optional = true }
