@@ -5,7 +5,7 @@ macro_rules! to_sql_checked {
     () => ()
 }
 
-#[derive(ToSql)]
+#[derive(Clone, ToSql)]
 #[postgres(
     foo = "bar" //~ ERROR unknown attribute key `foo`
 )]

@@ -1,5 +1,4 @@
-use syntax::ast::{Attribute, LitKind, MetaItemKind};
-use syntax::attr::AttrMetaMethods;
+use syntax::ast::{Attribute, LitKind, MetaItemKind, NestedMetaItemKind};
 use syntax::ext::base::ExtCtxt;
 use syntax::parse::token::InternedString;
 
@@ -21,6 +20,13 @@ pub fn get_overrides(ctx: &mut ExtCtxt, attrs: &[Attribute]) -> Overrides {
             };
 
             for item in list {
+                let item = match item.node {
+                    NestedMetaItemKind::MetaItem(ref item) => item,
+                    _ => {
+                        ctx.span_err(item.span, "expected a meta item");
+                        continue;
+                    }
+                };
                 match item.node {
                     MetaItemKind::NameValue(ref key, ref value) => {
                         if *key != "name" {

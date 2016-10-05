@@ -5,14 +5,14 @@ macro_rules! to_sql_checked {
     () => ()
 }
 
-#[derive(ToSql)]
+#[derive(Clone, ToSql)]
 enum Foo {
     Bar(i32), //~ ERROR #[derive(ToSql)] does not support non-C-like enums
     Baz { b: i32 }, //~ ERROR #[derive(ToSql)] does not support non-C-like enums
 }
 
-#[derive(FromSql)]
-enum Foo {
+#[derive(Clone, FromSql)]
+enum Bar {
     Bar(i32), //~ ERROR #[derive(FromSql)] does not support non-C-like enums
     Baz { b: i32 }, //~ ERROR #[derive(FromSql)] does not support non-C-like enums
 }
