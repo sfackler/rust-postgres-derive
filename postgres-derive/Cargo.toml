@@ -8,4 +8,4 @@ rustc-macro = true
 test = false
 
 [dependencies]
-postgres-derive-codegen2 = { path = "../postgres-derive-codegen2" }
+postgres-derive-internals = { path = "../postgres-derive-internals" }

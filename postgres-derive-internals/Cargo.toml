@@ -1,5 +1,5 @@
 [package]
-name = "postgres-derive-codegen2"
+name = "postgres-derive-internals"
 version = "0.1.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 
