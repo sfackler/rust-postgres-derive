@@ -8,13 +8,13 @@ pub struct Variant {
 }
 
 impl Variant {
-    pub fn parse(raw: &mut syn::Variant) -> Result<Variant, String> {
+    pub fn parse(raw: &syn::Variant) -> Result<Variant, String> {
         match raw.data {
             VariantData::Unit => {}
             _ => return Err("non-C-like enums are not supported".to_owned()),
         }
 
-        let overrides = try!(Overrides::extract(&mut raw.attrs));
+        let overrides = try!(Overrides::extract(&raw.attrs));
         Ok(Variant {
             ident: raw.ident.clone(),
             name: overrides.name.unwrap_or_else(|| raw.ident.to_string()),

@@ -67,16 +67,3 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> String {
 
     out
 }
-
-#[test]
-fn foo() {
-    let code = "
-#[postgres(name = \"foo\")]
-enum Foo {
-    #[postgres(name = \"bar\")]
-    Bar,
-    Baz
-}
-";
-    panic!(expand_derive_tosql(code).unwrap());
-}

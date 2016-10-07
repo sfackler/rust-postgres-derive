@@ -7,7 +7,17 @@ use rustc_macro::TokenStream;
 
 #[rustc_macro_derive(ToSql)]
 pub fn derive_tosql(input: TokenStream) -> TokenStream {
-    match postgres_derive_internals::expand_derive_tosql(&input.to_string()) {
+    derive("ToSql", input)
+}
+
+#[rustc_macro_derive(FromSql)]
+pub fn derive_fromsql(input: TokenStream) -> TokenStream {
+    derive("FromSql", input)
+}
+
+fn derive(trait_: &str, input: TokenStream) -> TokenStream {
+    let input = format!("#[derive({})] {}", trait_, input);
+    match postgres_derive_internals::expand_derive(&input) {
         Ok(expanded) => expanded.parse().unwrap(),
         Err(err) => panic!(err),
     }

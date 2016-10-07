@@ -5,15 +5,13 @@ pub struct Overrides {
 }
 
 impl Overrides {
-    pub fn extract(attrs: &mut Vec<Attribute>) -> Result<Overrides, String> {
+    pub fn extract(attrs: &[Attribute]) -> Result<Overrides, String> {
         let mut overrides = Overrides {
             name: None,
         };
-        let mut other_attrs = vec![];
 
         for attr in attrs.drain(..) {
             if attr.value.name() != "postgres" {
-                other_attrs.push(attr);
                 continue;
             }
 
@@ -41,8 +39,10 @@ impl Overrides {
             }
         }
 
-        *attrs = other_attrs;
         Ok(overrides)
     }
-}
 
+    pub fn strip(attrs: &mut Vec<Attribute>) {
+        attrs.retain(|a| a.name() != "postgres");
+    }
+}
