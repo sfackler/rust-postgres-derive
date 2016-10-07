@@ -2,10 +2,14 @@ use std::fmt::Write;
 
 use enums::Variant;
 
-pub fn enum_body(variants: &[Variant]) -> String {
+pub fn enum_body(name: &str, variants: &[Variant]) -> String {
     let mut body = String::new();
 
     write!(body, "
+        if type_.name() != \"{}\" {{
+            return false;
+        }}
+
         match *type_.kind() {{
             ::postgres::types::Kind::Enum(ref variants) => {{
                 if variants.len() != {} {{
@@ -13,7 +17,7 @@ pub fn enum_body(variants: &[Variant]) -> String {
                 }}
 
                 variants.iter().all(|v| {{
-                    match &**v {{", variants.len()).unwrap();
+                    match &**v {{", name, variants.len()).unwrap();
 
     for variant in variants {
         write!(body, "

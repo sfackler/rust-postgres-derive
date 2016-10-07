@@ -1,5 +1,6 @@
 use std::fmt::Write;
-use syn::{Body, Ident, MacroInput};
+use syn::{Body, Ident, MacroInput, VariantData, Field};
+use quote::{Tokens, ToTokens};
 
 use accepts;
 use enums::Variant;
@@ -13,7 +14,11 @@ pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
     let (accepts_body, to_sql_body) = match input.body {
         Body::Enum(ref variants) => {
             let variants: Vec<Variant> = try!(variants.iter().map(Variant::parse).collect());
-            (accepts::enum_body(&variants), enum_body(&input.ident, &variants))
+            (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
+        }
+        Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
+            let field = &fields[0];
+            (domain_accepts_body(field), domain_body(&input.ident, field))
         }
         _ => {
             return Err("#[derive(ToSql)] may only be applied to structs, single field tuple \
@@ -23,22 +28,18 @@ pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
 
     let out = format!("
 impl ::postgres::types::FromSql for {} {{
-    fn from_sql(_: &::postgres::types::Type,
+    fn from_sql(_type: &::postgres::types::Type,
                 buf: &[u8],
-                _: &::postgres::types::SessionInfo)
+                _info: &::postgres::types::SessionInfo)
                 -> ::std::result::Result<{},
                                          ::std::boxed::Box<::std::error::Error +
                                                            ::std::marker::Sync +
                                                            ::std::marker::Send>> {{{}
     }}
 
-    fn accepts(type_: &::postgres::types::Type) -> bool {{
-        if type_.name() != \"{}\" {{
-            return false;
-        }}
-{}
+    fn accepts(type_: &::postgres::types::Type) -> bool {{{}
     }}
-}}", input.ident, input.ident, to_sql_body, name, accepts_body);
+}}", input.ident, input.ident, to_sql_body, accepts_body);
 
     Ok(out)
 }
@@ -61,4 +62,18 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> String {
         }");
 
     out
+}
+
+fn domain_accepts_body(field: &Field) -> String {
+    let mut tokens = Tokens::new();
+    field.ty.to_tokens(&mut tokens);
+    format!("
+        <{} as ::postgres::types::FromSql>::accepts(type_)", tokens)
+}
+
+fn domain_body(ident: &Ident, field: &Field) -> String {
+    let mut tokens = Tokens::new();
+    field.ty.to_tokens(&mut tokens);
+    format!("\
+        <{} as ::postgres::types::FromSql>::from_sql(_type, buf, _info).map({})", tokens, ident)
 }
