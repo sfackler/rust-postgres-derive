@@ -1,10 +1,12 @@
 extern crate syn;
 extern crate quote;
 
-use syn::{MacroInput, MetaItem};
+use syn::{MacroInput, MetaItem, Body, VariantData};
+use quote::{Tokens, ToTokens};
 
-pub use fromsql::expand_derive_fromsql;
-pub use tosql::expand_derive_tosql;
+use overrides::Overrides;
+use fromsql::expand_derive_fromsql;
+use tosql::expand_derive_tosql;
 
 mod accepts;
 mod enums;
@@ -26,6 +28,13 @@ pub fn expand_derive(source: &str) -> Result<String, String> {
     } else {
         "".to_owned()
     };
+
+    strip_overrides(&mut input);
+
+    let mut tokens = Tokens::new();
+    input.to_tokens(&mut tokens);
+
+    Ok(format!("{}{}{}", tokens, tosql, fromsql))
 }
 
 fn strip_derives(input: &mut MacroInput) -> (bool, bool) {
@@ -70,5 +79,20 @@ fn strip_derives(input: &mut MacroInput) -> (bool, bool) {
 }
 
 fn strip_overrides(input: &mut MacroInput) {
+    Overrides::strip(&mut input.attrs);
 
+    match input.body {
+        Body::Enum(ref mut variants) => {
+            for variant in variants {
+                Overrides::strip(&mut variant.attrs);
+            }
+        }
+        Body::Struct(VariantData::Struct(ref mut fields)) |
+        Body::Struct(VariantData::Tuple(ref mut fields)) => {
+            for field in fields {
+                Overrides::strip(&mut field.attrs);
+            }
+        }
+        Body::Struct(VariantData::Unit) => {}
+    }
 }

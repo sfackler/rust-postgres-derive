@@ -10,7 +10,7 @@ impl Overrides {
             name: None,
         };
 
-        for attr in attrs.drain(..) {
+        for attr in attrs {
             if attr.value.name() != "postgres" {
                 continue;
             }

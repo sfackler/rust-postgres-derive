@@ -1,20 +1,18 @@
 use std::fmt::Write;
-use syn::{self, Body, VariantData, Ident};
-use quote::{Tokens, ToTokens};
+use syn::{Body, Ident, MacroInput};
 
 use accepts;
 use enums::Variant;
 use overrides::Overrides;
 
-pub fn expand_derive_tosql(source: &str) -> Result<String, String> {
-    let mut input = try!(syn::parse_macro_input(source));
-    let overrides = try!(Overrides::extract(&mut input.attrs));
+pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
+    let overrides = try!(Overrides::extract(&input.attrs));
 
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
 
     let (accepts_body, to_sql_body) = match input.body {
-        Body::Enum(ref mut variants) => {
-            let variants: Vec<Variant> = try!(variants.iter_mut().map(Variant::parse).collect());
+        Body::Enum(ref variants) => {
+            let variants: Vec<Variant> = try!(variants.iter().map(Variant::parse).collect());
             (accepts::enum_body(&variants), enum_body(&input.ident, &variants))
         }
         _ => {
@@ -23,18 +21,16 @@ pub fn expand_derive_tosql(source: &str) -> Result<String, String> {
         }
     };
 
-    let mut tokens = Tokens::new();
-    input.to_tokens(&mut tokens);
-
     let out = format!("
-{}
-
 impl ::postgres::types::ToSql for {} {{
     fn to_sql(&self,
               _: &::postgres::types::Type,
               buf: &mut ::std::vec::Vec<u8>,
               _: &::postgres::types::SessionInfo)
-              -> ::postgres::Result<::postgres::types::IsNull> {{{}
+              -> ::std::result::Result<::postgres::types::IsNull,
+                                       ::std::boxed::Box<::std::error::Error +
+                                                         ::std::marker::Sync +
+                                                         ::std::marker::Send>> {{{}
     }}
 
     fn accepts(type_: &::postgres::types::Type) -> bool {{
@@ -45,7 +41,7 @@ impl ::postgres::types::ToSql for {} {{
     }}
 
     to_sql_checked!();
-}}", tokens, input.ident, to_sql_body, name, accepts_body);
+}}", input.ident, to_sql_body, name, accepts_body);
 
     Ok(out)
 }

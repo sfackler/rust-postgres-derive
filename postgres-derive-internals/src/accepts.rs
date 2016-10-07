@@ -8,7 +8,7 @@ pub fn enum_body(variants: &[Variant]) -> String {
     write!(body, "
         match *type_.kind() {{
             ::postgres::types::Kind::Enum(ref variants) => {{
-                if variants.len != {} {{
+                if variants.len() != {} {{
                     return false;
                 }}
 
