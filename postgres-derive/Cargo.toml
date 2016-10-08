@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 
 [lib]
-rustc-macro = true
+proc-macro = true
 test = false
 
 [dependencies]
