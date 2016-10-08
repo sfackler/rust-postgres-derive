@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "postgres-derive",
+    "postgres-derive-codegen",
+    "postgres-derive-codegen/test",
+    "postgres-derive-internals"
+]
