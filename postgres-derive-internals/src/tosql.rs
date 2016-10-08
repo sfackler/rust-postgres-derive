@@ -127,25 +127,25 @@ fn composite_body(fields: &[Field]) -> String {
                field.name, field.ident).unwrap();
     }
 
-    write!(out, "\
-                _ => unreachable!(),\
-            }};\
-            \
-            let count = match try!(r) {{\
-                ::postgres::types::IsNull::Yes => -1,\
-                ::postgres::types::IsNull::No => {{\
-                    let len = buf.len() - base - 4;\
-                    if len > i32::max_value() as usize {{\
-                        return ::std::result::Result::Err(\
-                            ::std::convert::Into::into(\"value too large to transmit\"));\
-                    }}\
-                    len as i32\
-                }}\
-            }};\
-            \
-            try!(write_be_i32(&mut &mut buf[base..base + 4], count));\
-        }}\
-        \
+    write!(out, "
+                _ => unreachable!(),
+            }};
+
+            let count = match try!(r) {{
+                ::postgres::types::IsNull::Yes => -1,
+                ::postgres::types::IsNull::No => {{
+                    let len = buf.len() - base - 4;
+                    if len > i32::max_value() as usize {{
+                        return ::std::result::Result::Err(
+                            ::std::convert::Into::into(\"value too large to transmit\"));
+                    }}
+                    len as i32
+                }}
+            }};
+
+            try!(write_be_i32(&mut &mut buf[base..base + 4], count));
+        }}
+
         ::std::result::Result::Ok(::postgres::types::IsNull::No)").unwrap();
 
     out

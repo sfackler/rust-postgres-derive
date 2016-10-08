@@ -145,8 +145,8 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> String {
             if oid != field.type_().oid() {{
                 return ::std::result::Result::Err(
                     ::std::convert::Into::into(\"unexpected OID\"));
-            }}\
-            \
+            }}
+
             match field.name() {{").unwrap();
 
     for field in fields {
