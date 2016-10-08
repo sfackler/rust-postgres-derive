@@ -1,21 +1,13 @@
-#![cfg_attr(not(feature = "with-syntex"), feature(rustc_private, quote))]
-
-#[cfg(feature = "with-syntex")]
 extern crate syntex;
-#[cfg(feature = "with-syntex")]
 extern crate syntex_syntax as syntax;
-#[cfg(not(feature = "with-syntex"))]
-extern crate syntax;
-#[cfg(not(feature = "with-syntex"))]
-extern crate rustc_plugin;
+extern crate postgres_derive_internals;
 
-#[cfg(feature = "with-syntex")]
-include!(concat!(env!("OUT_DIR"), "/lib.rs"));
+use syntax::ext::base::{Annotatable, ExtCtxt};
+use syntax::codemap::Span;
+use syntax::ast::MetaItem;
+use syntax::print::pprust;
+use syntax::parse;
 
-#[cfg(not(feature = "with-syntex"))]
-include!("lib.rs.in");
-
-#[cfg(feature = "with-syntex")]
 pub fn expand<S, D>(src: S, dst: D) -> Result<(), syntex::Error>
     where S: AsRef<std::path::Path>,
           D: AsRef<std::path::Path>,
@@ -25,7 +17,6 @@ pub fn expand<S, D>(src: S, dst: D) -> Result<(), syntex::Error>
     registry.expand("", src.as_ref(), dst.as_ref())
 }
 
-#[cfg(feature = "with-syntex")]
 pub fn register(reg: &mut syntex::Registry) {
     use syntax::{ast, fold};
 
@@ -53,22 +44,64 @@ pub fn register(reg: &mut syntex::Registry) {
     reg.add_attr("feature(custom_derive)");
     reg.add_attr("feature(custom_attribute)");
 
-    reg.add_decorator("derive_ToSql", tosql::expand);
-    reg.add_decorator("derive_FromSql", fromsql::expand);
+    reg.add_decorator("derive_ToSql", expand_tosql);
+    reg.add_decorator("derive_FromSql", expand_fromsql);
 
     reg.add_post_expansion_pass(strip_attributes);
 }
 
-#[cfg(not(feature = "with-syntex"))]
-pub fn register(registry: &mut rustc_plugin::Registry) {
-    use syntax::ext::base::SyntaxExtension;
-    use syntax::feature_gate::AttributeType;
-    use syntax::parse::token;
+fn expand_tosql(ctx: &mut ExtCtxt,
+                span: Span,
+                _: &MetaItem,
+                annotatable: &Annotatable,
+                push: &mut FnMut(Annotatable)) {
+    expand_inner(ctx,
+                 span,
+                 "ToSql",
+                 annotatable,
+                 push,
+                 postgres_derive_internals::expand_derive_tosql);
+}
 
-    registry.register_syntax_extension(token::intern("derive_ToSql"),
-                                       SyntaxExtension::MultiDecorator(Box::new(tosql::expand)));
-    registry.register_syntax_extension(token::intern("derive_FromSql"),
-                                       SyntaxExtension::MultiDecorator(Box::new(fromsql::expand)));
+fn expand_fromsql(ctx: &mut ExtCtxt,
+                  span: Span,
+                  _: &MetaItem,
+                  annotatable: &Annotatable,
+                  push: &mut FnMut(Annotatable)) {
+    expand_inner(ctx,
+                 span,
+                 "FromSql",
+                 annotatable,
+                 push,
+                 postgres_derive_internals::expand_derive_fromsql);
+}
 
-    registry.register_attribute("postgres".to_owned(), AttributeType::Normal);
+fn expand_inner(ctx: &mut ExtCtxt,
+                span: Span,
+                trait_: &str,
+                annotatable: &Annotatable,
+                push: &mut FnMut(Annotatable),
+                expand: fn(&str) -> Result<String, String>) {
+    let item = match *annotatable {
+        Annotatable::Item(ref item) => item,
+        _ => {
+            ctx.span_err(span, &format!("#[derive({})] can only be applied to structs, single field \
+                                         tuple structs, and enums", trait_));
+            return;
+        }
+    };
+
+    let item = pprust::item_to_string(item);
+    match expand(&item) {
+        Ok(source) => {
+            let mut parser = parse::new_parser_from_source_str(&ctx.parse_sess,
+                                                               ctx.cfg.clone(),
+                                                               "<macro src>".to_owned(),
+                                                               source);
+            while let Some(item) = parser.parse_item().unwrap() {
+                push(Annotatable::Item(item));
+            }
+        }
+        Err(err) => ctx.span_err(span, &err),
+    }
 }

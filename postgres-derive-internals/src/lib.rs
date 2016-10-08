@@ -5,8 +5,6 @@ use syn::{MacroInput, MetaItem, Body, VariantData};
 use quote::{Tokens, ToTokens};
 
 use overrides::Overrides;
-use fromsql::expand_derive_fromsql;
-use tosql::expand_derive_tosql;
 
 mod accepts;
 mod composites;
@@ -15,17 +13,27 @@ mod fromsql;
 mod overrides;
 mod tosql;
 
+pub fn expand_derive_tosql(source: &str) -> Result<String, String> {
+    let input = try!(syn::parse_macro_input(source));
+    tosql::expand_derive_tosql(&input)
+}
+
+pub fn expand_derive_fromsql(source: &str) -> Result<String, String> {
+    let input = try!(syn::parse_macro_input(source));
+    fromsql::expand_derive_fromsql(&input)
+}
+
 pub fn expand_derive(source: &str) -> Result<String, String> {
     let mut input = try!(syn::parse_macro_input(source));
     let (tosql, fromsql) = strip_derives(&mut input);
 
     let tosql = if tosql {
-        try!(expand_derive_tosql(&input))
+        try!(tosql::expand_derive_tosql(&input))
     } else {
         "".to_owned()
     };
     let fromsql = if fromsql {
-        try!(expand_derive_fromsql(&input))
+        try!(fromsql::expand_derive_fromsql(&input))
     } else {
         "".to_owned()
     };

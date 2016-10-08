@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate postgres;
 
-use postgres::{Connection, SslMode};
+use postgres::{Connection, TlsMode};
 use postgres::types::{FromSql, ToSql};
 use std::fmt;
 
@@ -23,7 +23,7 @@ pub fn test_type<T, S>(conn: &Connection, sql_type: &str, checks: &[(T, S)])
 
 #[test]
 fn domain() {
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE DOMAIN pg_temp.session_id AS bytea CHECK(octet_length(VALUE) = 16);", &[])
         .unwrap();
 
@@ -33,7 +33,7 @@ fn domain() {
 
 #[test]
 fn enum_() {
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.mood AS ENUM ('sad', 'ok', 'happy')", &[]).unwrap();
 
     test_type(&conn,

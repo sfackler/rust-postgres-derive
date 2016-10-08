@@ -7,17 +7,9 @@ description = "Deriving codegen support for Postgres enum, domain, and composite
 repository = "https://github.com/sfackler/rust-postgres-derive"
 readme = "../README.md"
 keywords = ["database", "postgres", "postgresql", "sql"]
-build = "build.rs"
 exclude = ["test"]
 
-[features]
-default = ["with-syntex"]
-nightly = []
-with-syntex = ["syntex", "syntex_syntax"]
-
-[build-dependencies]
-syntex = { version = "0.44", optional = true }
-
 [dependencies]
-syntex = { version = "0.44", optional = true }
-syntex_syntax = { version = "0.44", optional = true }
+syntex = "0.44"
+syntex_syntax = "0.44"
+postgres-derive-internals = { path = "../postgres-derive-internals" }
