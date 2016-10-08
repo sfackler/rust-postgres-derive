@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 
 [dependencies]
-syn = "0.8"
-quote = "0.2"
+syn = "0.9"
+quote = "0.3"
