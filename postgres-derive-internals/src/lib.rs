@@ -9,6 +9,7 @@ use fromsql::expand_derive_fromsql;
 use tosql::expand_derive_tosql;
 
 mod accepts;
+mod composites;
 mod enums;
 mod fromsql;
 mod overrides;
