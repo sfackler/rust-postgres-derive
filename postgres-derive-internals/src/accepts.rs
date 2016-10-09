@@ -1,74 +1,69 @@
-use std::fmt::Write;
-use quote::{Tokens, ToTokens};
+use std::iter;
+use syn::Ident;
+use quote::Tokens;
 
 use enums::Variant;
 use composites::Field;
 
-pub fn enum_body(name: &str, variants: &[Variant]) -> String {
-    let mut body = String::new();
+pub fn enum_body(name: &str, variants: &[Variant]) -> Tokens {
+    let num_variants = variants.len();
+    let variant_names = variants.iter().map(|v| &v.name);
 
-    write!(body, "
-        if type_.name() != \"{}\" {{
+    quote! {
+        if type_.name() != #name {
             return false;
-        }}
+        }
 
-        match *type_.kind() {{
-            ::postgres::types::Kind::Enum(ref variants) => {{
-                if variants.len() != {} {{
+        match *type_.kind() {
+            ::postgres::types::Kind::Enum(ref variants) => {
+                if variants.len() != #num_variants {
                     return false;
-                }}
+                }
 
-                variants.iter().all(|v| {{
-                    match &**v {{", name, variants.len()).unwrap();
-
-    for variant in variants {
-        write!(body, "
-                        \"{}\" => true,", variant.name).unwrap();
-    }
-
-    write!(body, "
+                variants.iter().all(|v| {
+                    match &**v {
+                        #(
+                            #variant_names => true,
+                        )*
                         _ => false,
-                    }}
-                }})
-            }}
+                    }
+                })
+            }
             _ => false,
-        }}").unwrap();
-
-    body
+        }
+    }
 }
 
-pub fn composite_body(name: &str, trait_: &str, fields: &[Field]) -> String {
-    let mut body = String::new();
+pub fn composite_body(name: &str, trait_: &str, fields: &[Field]) -> Tokens {
+    let num_fields = fields.len();
+    let trait_ = Ident::new(trait_);
+    let traits = iter::repeat(&trait_);
+    let field_names = fields.iter().map(|f| &f.name);
+    let field_types = fields.iter().map(|f| &f.type_);
 
-    write!(body, "
-        if type_.name() != \"{}\" {{
+    quote! {
+        if type_.name() != #name {
             return false;
-        }}
+        }
 
-        match *type_.kind() {{
-            ::postgres::types::Kind::Composite(ref fields) => {{
-                if fields.len() != {} {{
+        match *type_.kind() {
+            ::postgres::types::Kind::Composite(ref fields) => {
+                if fields.len() != #num_fields {
                     return false;
-                }}
+                }
 
-                fields.iter().all(|f| {{
-                    match f.name() {{", name, fields.len()).unwrap();
-
-    for field in fields {
-        let mut tokens = Tokens::new();
-        field.type_.to_tokens(&mut tokens);
-        write!(body, "
-                        \"{}\" => <{} as ::postgres::types::{}>::accepts(f.type_()),",
-               field.name, tokens, trait_).unwrap();
+                fields.iter().all(|f| {
+                    match f.name() {
+                        #(
+                            #field_names => {
+                                <#field_types as ::postgres::types::#traits>::accepts(f.type_())
+                            }
+                        )*
+                        _ => false,
+                    }
+                })
+            }
+            _ => false,
+        }
     }
-
-    write!(body, "\
-                        _ => false,\
-                    }}\
-                }})\
-            }}\
-            _ => false,\
-        }}").unwrap();
-
-    body
 }

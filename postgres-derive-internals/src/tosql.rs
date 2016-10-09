@@ -15,7 +15,7 @@ pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
     let (accepts_body, to_sql_body) = match input.body {
         Body::Enum(ref variants) => {
             let variants: Vec<Variant> = try!(variants.iter().map(Variant::parse).collect());
-            (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
+            (accepts::enum_body(&name, &variants).to_string(), enum_body(&input.ident, &variants))
         }
         Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
             let field = &fields[0];
@@ -23,7 +23,7 @@ pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
         }
         Body::Struct(VariantData::Struct(ref fields)) => {
             let fields: Vec<Field> = try!(fields.iter().map(Field::parse).collect());
-            (accepts::composite_body(&name, "ToSql", &fields),
+            (accepts::composite_body(&name, "ToSql", &fields).to_string(),
              composite_body(&fields))
         }
         _ => {
