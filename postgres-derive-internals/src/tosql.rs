@@ -1,6 +1,6 @@
-use std::fmt::Write;
+use std::iter;
 use syn::{self, Body, Ident, MacroInput, VariantData};
-use quote::{Tokens, ToTokens};
+use quote::Tokens;
 
 use accepts;
 use composites::Field;
@@ -15,7 +15,7 @@ pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
     let (accepts_body, to_sql_body) = match input.body {
         Body::Enum(ref variants) => {
             let variants: Vec<Variant> = try!(variants.iter().map(Variant::parse).collect());
-            (accepts::enum_body(&name, &variants).to_string(), enum_body(&input.ident, &variants))
+            (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
         }
         Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
             let field = &fields[0];
@@ -23,7 +23,7 @@ pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
         }
         Body::Struct(VariantData::Struct(ref fields)) => {
             let fields: Vec<Field> = try!(fields.iter().map(Field::parse).collect());
-            (accepts::composite_body(&name, "ToSql", &fields).to_string(),
+            (accepts::composite_body(&name, "ToSql", &fields),
              composite_body(&fields))
         }
         _ => {
@@ -32,74 +32,81 @@ pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
         }
     };
 
-    let out = format!("
-impl ::postgres::types::ToSql for {} {{
-    fn to_sql(&self,
-              _type: &::postgres::types::Type,
-              buf: &mut ::std::vec::Vec<u8>,
-              _info: &::postgres::types::SessionInfo)
-              -> ::std::result::Result<::postgres::types::IsNull,
-                                       ::std::boxed::Box<::std::error::Error +
-                                                         ::std::marker::Sync +
-                                                         ::std::marker::Send>> {{{}
-    }}
+    let ident = &input.ident;
+    let out = quote! {
+        impl ::postgres::types::ToSql for #ident {
+            fn to_sql(&self,
+                      _type: &::postgres::types::Type,
+                      buf: &mut ::std::vec::Vec<u8>,
+                      _info: &::postgres::types::SessionInfo)
+                      -> ::std::result::Result<::postgres::types::IsNull,
+                                               ::std::boxed::Box<::std::error::Error +
+                                                                 ::std::marker::Sync +
+                                                                 ::std::marker::Send>> {
+                #to_sql_body
+            }
 
-    fn accepts(type_: &::postgres::types::Type) -> bool {{{}
-    }}
+            fn accepts(type_: &::postgres::types::Type) -> bool {
+                #accepts_body
+            }
 
-    to_sql_checked!();
-}}", input.ident, to_sql_body, accepts_body);
+            to_sql_checked!();
+        }
+    };
 
-    Ok(out)
+    Ok(out.to_string())
 }
 
-fn enum_body(ident: &Ident, variants: &[Variant]) -> String {
-    let mut out = "
-        let s = match *self {".to_owned();
+fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
+    let idents = iter::repeat(ident);
+    let variant_idents = variants.iter().map(|v| &v.ident);
+    let variant_names = variants.iter().map(|v| &v.name);
 
-    for variant in variants {
-        write!(out, "
-            {}::{} => \"{}\",", ident, variant.ident, variant.name).unwrap();
-    }
-
-    out.push_str("
+    quote! {
+        let s = match *self {
+            #(
+                #idents::#variant_idents => #variant_names,
+            )*
         };
 
         buf.extend_from_slice(s.as_bytes());
-        ::std::result::Result::Ok(::postgres::types::IsNull::No)");
-
-    out
+        ::std::result::Result::Ok(::postgres::types::IsNull::No)
+    }
 }
 
-fn domain_accepts_body(name: &str, field: &syn::Field) -> String {
-    let mut tokens = Tokens::new();
-    field.ty.to_tokens(&mut tokens);
+fn domain_accepts_body(name: &str, field: &syn::Field) -> Tokens {
+    let ty = &field.ty;
 
-    format!("
-        if type_.name() != \"{}\" {{
+    quote! {
+        if type_.name() != #name {
             return false;
-        }}
+        }
 
-        match *type_.kind() {{
-            ::postgres::types::Kind::Domain(ref type_) => {{
-                <{} as ::postgres::types::ToSql>::accepts(type_)
-            }}
+        match *type_.kind() {
+            ::postgres::types::Kind::Domain(ref type_) => {
+                <#ty as ::postgres::types::ToSql>::accepts(type_)
+            }
             _ => false,
-        }}", name, tokens)
+        }
+    }
 }
 
-fn domain_body() -> String {
-    "
+fn domain_body() -> Tokens {
+    quote! {
         let type_ = match *_type.kind() {
             ::postgres::types::Kind::Domain(ref type_) => type_,
             _ => unreachable!(),
         };
 
-        ::postgres::types::ToSql::to_sql(&self.0, type_, buf, _info)".to_owned()
+        ::postgres::types::ToSql::to_sql(&self.0, type_, buf, _info)
+    }
 }
 
-fn composite_body(fields: &[Field]) -> String {
-    let mut out = "
+fn composite_body(fields: &[Field]) -> Tokens {
+    let field_names = fields.iter().map(|f| &f.name);
+    let field_idents = fields.iter().map(|f| &f.ident);
+
+    quote! {
         fn write_be_i32<W>(buf: &mut W, n: i32) -> ::std::io::Result<()>
             where W: ::std::io::Write
         {
@@ -119,34 +126,33 @@ fn composite_body(fields: &[Field]) -> String {
 
             let base = buf.len();
             try!(write_be_i32(buf, 0));
-            let r = match field.name() {".to_owned();
-
-    for field in fields {
-        write!(out, "
-                \"{}\" => ::postgres::types::ToSql::to_sql(&self.{}, field.type_(), buf, _info),",
-               field.name, field.ident).unwrap();
-    }
-
-    write!(out, "
+            let r = match field.name() {
+                #(
+                    #field_names => {
+                        ::postgres::types::ToSql::to_sql(&self.#field_idents,
+                                                         field.type_(),
+                                                         buf,
+                                                         _info)
+                    }
+                )*
                 _ => unreachable!(),
-            }};
+            };
 
-            let count = match try!(r) {{
+            let count = match try!(r) {
                 ::postgres::types::IsNull::Yes => -1,
-                ::postgres::types::IsNull::No => {{
+                ::postgres::types::IsNull::No => {
                     let len = buf.len() - base - 4;
-                    if len > i32::max_value() as usize {{
+                    if len > i32::max_value() as usize {
                         return ::std::result::Result::Err(
-                            ::std::convert::Into::into(\"value too large to transmit\"));
-                    }}
+                            ::std::convert::Into::into("value too large to transmit"));
+                    }
                     len as i32
-                }}
-            }};
+                }
+            };
 
             try!(write_be_i32(&mut &mut buf[base..base + 4], count));
-        }}
+        }
 
-        ::std::result::Result::Ok(::postgres::types::IsNull::No)").unwrap();
-
-    out
+        ::std::result::Result::Ok(::postgres::types::IsNull::No)
+    }
 }
