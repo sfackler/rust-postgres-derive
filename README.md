@@ -22,17 +22,18 @@ Cargo.toml
 # ...
 
 [dependencies]
-postgres-derive-macros = "0.1"
-postgres = "0.11.3"
+postgres-derive-macros = "0.2"
+postgres = "0.12"
 ```
 
 lib.rs
 ```rust
-#![feature(plugin, custom_derive)]
-#![plugin(postgres_derive_macros)]
+#![feature(proc_macro)]
 
 #[macro_use]
 extern crate postgres;
+#[macro_use]
+extern crate postgres_derive;
 
 #[derive(Debug, ToSql, FromSql)]
 pub enum Mood {
@@ -55,10 +56,10 @@ Cargo.toml
 build = "build.rs"
 
 [build-dependencies]
-postgres-derive-codegen = "0.1"
+postgres-derive-codegen = "0.2"
 
 [dependencies]
-postgres = "0.11.3"
+postgres = "0.12"
 ```
 
 build.rs
