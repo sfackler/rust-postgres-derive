@@ -1,6 +1,6 @@
 [package]
 name = "postgres-derive-codegen"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["Steven Fackler <sfackler@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "Deriving codegen support for Postgres enum, domain, and composite types"
@@ -12,4 +12,4 @@ exclude = ["test"]
 [dependencies]
 syntex = "0.44"
 syntex_syntax = "0.44"
-postgres-derive-internals = { path = "../postgres-derive-internals" }
+postgres-derive-internals = { version = "0.2.0", path = "../postgres-derive-internals" }

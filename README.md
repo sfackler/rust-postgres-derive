@@ -5,7 +5,7 @@
 Syntax extensions to automatically derive `FromSql` and `ToSql` implementations for Postgres enum,
 domain, and composite types.
 
-The generated code requires rust-postgres 0.11.3 or higher and Rust 1.8.0 or higher.
+The generated code requires rust-postgres 0.12.0 or higher and Rust 1.10.0 or higher.
 
 # Usage
 

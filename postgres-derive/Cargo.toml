@@ -1,6 +1,6 @@
 [package]
 name = "postgres-derive"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 license = "MIT/Apache-2.0"
 description = "Deriving plugin support for Postgres enum, domain, and composite types"
@@ -13,7 +13,7 @@ proc-macro = true
 test = false
 
 [dependencies]
-postgres-derive-internals = { path = "../postgres-derive-internals" }
+postgres-derive-internals = { version = "0.2.0", path = "../postgres-derive-internals" }
 
 [dev-dependencies]
 postgres = "0.12"
