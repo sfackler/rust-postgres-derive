@@ -11,4 +11,4 @@ test = false
 postgres-derive-internals = { path = "../postgres-derive-internals" }
 
 [dev-dependencies]
-postgres = { git = "https://github.com/sfackler/rust-postgres" }
+postgres = "0.12"

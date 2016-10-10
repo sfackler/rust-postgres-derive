@@ -8,4 +8,4 @@ build = "build.rs"
 postgres-derive-codegen = { path = ".." }
 
 [dependencies]
-postgres = { git = "https://github.com/sfackler/rust-postgres" }
+postgres = "0.12"
