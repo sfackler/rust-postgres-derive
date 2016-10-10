@@ -1,10 +1,11 @@
-#![feature(plugin, custom_derive)]
-#![plugin(postgres_derive_macros)]
+#![feature(proc_macro)]
 
+#[macro_use]
+extern crate postgres_derive;
 #[macro_use]
 extern crate postgres;
 
-use postgres::{Connection, SslMode};
+use postgres::{Connection, TlsMode};
 use postgres::error::Error;
 use postgres::types::WrongType;
 
@@ -19,7 +20,7 @@ fn defaults() {
         price: Option<f64>,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.batch_execute("CREATE TYPE pg_temp.\"InventoryItem\" AS (
                             name TEXT,
                             supplier_id INT,
@@ -40,7 +41,7 @@ fn defaults() {
 
     util::test_type(&conn, "\"InventoryItem\"",
                     &[(item, "ROW('foobar', 100, 15.50)"),
-                      (item_null, "ROW('foobar', 100, NULL)")]);
+                        (item_null, "ROW('foobar', 100, NULL)")]);
 }
 
 #[test]
@@ -56,7 +57,7 @@ fn name_overrides() {
         _price: Option<f64>,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
@@ -77,7 +78,7 @@ fn name_overrides() {
 
     util::test_type(&conn, "inventory_item",
                     &[(item, "ROW('foobar', 100, 15.50)"),
-                      (item_null, "ROW('foobar', 100, NULL)")]);
+                        (item_null, "ROW('foobar', 100, NULL)")]);
 }
 
 #[test]
@@ -89,7 +90,7 @@ fn wrong_name() {
         price: Option<f64>,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
@@ -119,7 +120,7 @@ fn extra_field() {
         foo: i32,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
@@ -148,7 +149,7 @@ fn missing_field() {
         supplier_id: i32,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
@@ -176,7 +177,7 @@ fn wrong_type() {
         price: i32,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,

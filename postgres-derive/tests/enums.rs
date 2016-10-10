@@ -1,10 +1,11 @@
-#![feature(plugin, custom_derive)]
-#![plugin(postgres_derive_macros)]
+#![feature(proc_macro)]
 
+#[macro_use]
+extern crate postgres_derive;
 #[macro_use]
 extern crate postgres;
 
-use postgres::{Connection, SslMode};
+use postgres::{Connection, TlsMode};
 use postgres::error::Error;
 use postgres::types::WrongType;
 
@@ -18,7 +19,7 @@ fn defaults() {
         Baz
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.\"Foo\" AS ENUM ('Bar', 'Baz')", &[]).unwrap();
 
     util::test_type(&conn, "\"Foo\"", &[(Foo::Bar, "'Bar'"), (Foo::Baz, "'Baz'")]);
@@ -37,7 +38,7 @@ fn name_overrides() {
         Happy,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.mood AS ENUM ('sad', 'ok', 'happy')", &[]).unwrap();
 
     util::test_type(&conn,
@@ -53,7 +54,7 @@ fn wrong_name() {
         Baz
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.foo AS ENUM ('Bar', 'Baz')", &[]).unwrap();
 
     match conn.execute("SELECT $1::foo", &[&Foo::Bar]) {
@@ -72,7 +73,7 @@ fn extra_variant() {
         Buz,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.foo AS ENUM ('Bar', 'Baz')", &[]).unwrap();
 
     match conn.execute("SELECT $1::foo", &[&Foo::Bar]) {
@@ -89,7 +90,7 @@ fn missing_variant() {
         Bar,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.foo AS ENUM ('Bar', 'Baz')", &[]).unwrap();
 
     match conn.execute("SELECT $1::foo", &[&Foo::Bar]) {

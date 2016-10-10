@@ -1,10 +1,11 @@
-#![feature(plugin, custom_derive)]
-#![plugin(postgres_derive_macros)]
+#![feature(proc_macro)]
 
+#[macro_use]
+extern crate postgres_derive;
 #[macro_use]
 extern crate postgres;
 
-use postgres::{Connection, SslMode};
+use postgres::{Connection, TlsMode};
 use postgres::error::Error;
 use postgres::types::WrongType;
 
@@ -15,7 +16,7 @@ fn defaults() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
     struct SessionId(Vec<u8>);
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE DOMAIN pg_temp.\"SessionId\" AS bytea CHECK(octet_length(VALUE) = 16);",
                  &[])
         .unwrap();
@@ -30,7 +31,7 @@ fn name_overrides() {
     #[postgres(name = "session_id")]
     struct SessionId(Vec<u8>);
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE DOMAIN pg_temp.session_id AS bytea CHECK(octet_length(VALUE) = 16);", &[])
         .unwrap();
 
@@ -43,7 +44,7 @@ fn wrong_name() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
     struct SessionId(Vec<u8>);
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE DOMAIN pg_temp.session_id AS bytea CHECK(octet_length(VALUE) = 16);", &[])
         .unwrap();
 
@@ -59,7 +60,7 @@ fn wrong_type() {
     #[postgres(name = "session_id")]
     struct SessionId(i32);
 
-    let conn = Connection::connect("postgres://postgres@localhost", SslMode::None).unwrap();
+    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE DOMAIN pg_temp.session_id AS bytea CHECK(octet_length(VALUE) = 16);", &[])
         .unwrap();
 

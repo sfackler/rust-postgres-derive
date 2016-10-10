@@ -1,15 +1,19 @@
 [package]
-name = "postgres-derive-codegen"
+name = "postgres-derive"
 version = "0.2.0"
-authors = ["Steven Fackler <sfackler@gmail.com>"]
+authors = ["Steven Fackler <sfackler@palantir.com>"]
 license = "MIT/Apache-2.0"
-description = "Deriving codegen support for Postgres enum, domain, and composite types"
+description = "Deriving plugin support for Postgres enum, domain, and composite types"
 repository = "https://github.com/sfackler/rust-postgres-derive"
 readme = "../README.md"
 keywords = ["database", "postgres", "postgresql", "sql"]
-exclude = ["test"]
+
+[lib]
+proc-macro = true
+test = false
 
 [dependencies]
-syntex = "0.44"
-syntex_syntax = "0.44"
 postgres-derive-internals = { version = "0.2.0", path = "../postgres-derive-internals" }
+
+[dev-dependencies]
+postgres = "0.12"
