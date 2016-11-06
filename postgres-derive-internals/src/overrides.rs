@@ -1,4 +1,4 @@
-use syn::{Attribute, MetaItem, Lit};
+use syn::{Attribute, MetaItem, NestedMetaItem, Lit};
 
 pub struct Overrides {
     pub name: Option<String>,
@@ -22,7 +22,7 @@ impl Overrides {
 
             for item in list {
                 match *item {
-                    MetaItem::NameValue(ref name, ref value) => {
+                    NestedMetaItem::MetaItem(MetaItem::NameValue(ref name, ref value)) => {
                         if name != "name" {
                             return Err(format!("unknown override `{}`", name));
                         }
@@ -40,9 +40,5 @@ impl Overrides {
         }
 
         Ok(overrides)
-    }
-
-    pub fn strip(attrs: &mut Vec<Attribute>) {
-        attrs.retain(|a| a.name() != "postgres");
     }
 }

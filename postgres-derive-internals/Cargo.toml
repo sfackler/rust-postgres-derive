@@ -1,6 +1,6 @@
 [package]
 name = "postgres-derive-internals"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 license = "MIT/Apache-2.0"
 description = "Unstable internals library used by postgres-derive and postgres-derive-codegen"
@@ -9,5 +9,5 @@ readme = "../README.md"
 keywords = ["database", "postgres", "postgresql", "sql"]
 
 [dependencies]
-syn = "0.9"
+syn = "0.10"
 quote = "0.3"
