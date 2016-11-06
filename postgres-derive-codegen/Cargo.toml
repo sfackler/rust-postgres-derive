@@ -10,6 +10,6 @@ keywords = ["database", "postgres", "postgresql", "sql"]
 exclude = ["test"]
 
 [dependencies]
-syntex = "0.44"
-syntex_syntax = "0.44"
+syntex = "0.48"
+syntex_syntax = "0.48"
 postgres-derive-internals = { version = "0.2.0", path = "../postgres-derive-internals" }

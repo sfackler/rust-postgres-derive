@@ -95,7 +95,6 @@ fn expand_inner(ctx: &mut ExtCtxt,
     match expand(&item) {
         Ok(source) => {
             let mut parser = parse::new_parser_from_source_str(&ctx.parse_sess,
-                                                               ctx.cfg.clone(),
                                                                "<macro src>".to_owned(),
                                                                source);
             while let Some(item) = parser.parse_item().unwrap() {
