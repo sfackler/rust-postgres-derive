@@ -14,9 +14,7 @@ test = false
 
 [dependencies]
 postgres-derive-internals = { version = "0.2.0", path = "../postgres-derive-internals" }
-post-expansion = "0.2"
 syn = "0.10"
-quote = "0.3"
 
 [dev-dependencies]
 postgres = "0.12"
