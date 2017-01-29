@@ -22,14 +22,12 @@ Cargo.toml
 # ...
 
 [dependencies]
-postgres-derive-macros = "0.2"
-postgres = "0.12"
+postgres-derive = "0.2"
+postgres = "0.13"
 ```
 
 lib.rs
 ```rust
-#![feature(proc_macro)]
-
 #[macro_use]
 extern crate postgres;
 #[macro_use]
@@ -59,7 +57,7 @@ build = "build.rs"
 postgres-derive-codegen = "0.2"
 
 [dependencies]
-postgres = "0.12"
+postgres = "0.13"
 ```
 
 build.rs
