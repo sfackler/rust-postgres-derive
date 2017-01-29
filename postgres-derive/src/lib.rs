@@ -1,5 +1,3 @@
-#![feature(proc_macro, proc_macro_lib)]
-
 extern crate proc_macro;
 extern crate postgres_derive_internals;
 
