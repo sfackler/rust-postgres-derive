@@ -5,16 +5,11 @@
 Syntax extensions to automatically derive `FromSql` and `ToSql` implementations for Postgres enum,
 domain, and composite types.
 
-The generated code requires rust-postgres 0.12.0 or higher and Rust 1.10.0 or higher.
+The generated code requires rust-postgres 0.12.0 or higher and Rust 1.15.0 or higher.
 
 # Usage
 
-postgres-derive can be used both as a syntax extension with a nightly build of the compiler, or
-as a code generator with stable builds.
-
-## Nightlies
-
-Simply depend on the `postgres-derive-macros` crate and register it as a plugin:
+Simply depend on the `postgres-derive` crate and register it as a plugin:
 
 
 Cargo.toml
@@ -42,60 +37,6 @@ pub enum Mood {
 
 // ...
 ```
-
-## Stable
-
-Use `postgres-derive-codegen` in a build script:
-
-Cargo.toml
-```toml
-[package]
-# ...
-build = "build.rs"
-
-[build-dependencies]
-postgres-derive-codegen = "0.2"
-
-[dependencies]
-postgres = "0.13"
-```
-
-build.rs
-```rust
-extern crate postgres_derive_codegen;
-
-use std::env;
-use std::path::Path;
-
-pub fn main() {
-    let out_dir = env::var_os("OUT_DIR").unwrap();
-    let src = Path::new("src/types.rs.in");
-    let dst = Path::new(&out_dir).join("types.rs");
-
-    postgres_derive_codegen::expand(src, dst).unwrap();
-}
-```
-
-types.rs.in
-```rust
-#[derive(Debug, ToSql, FromSql)]
-pub enum Mood {
-    Sad,
-    Ok,
-    Happy,
-}
-```
-
-lib.rs
-```rust
-#[macro_use]
-extern crate postgres;
-
-include!(concat!(env!("OUT_DIR"), "/types.rs"));
-
-// ...
-```
-
 # Types
 
 ## Enums
