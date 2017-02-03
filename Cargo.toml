@@ -1,7 +1,20 @@
-[workspace]
-members = [
-    "postgres-derive",
-    "postgres-derive-codegen",
-    "postgres-derive-codegen/test",
-    "postgres-derive-internals"
-]
+[package]
+name = "postgres-derive"
+version = "0.2.2"
+authors = ["Steven Fackler <sfackler@palantir.com>"]
+license = "MIT/Apache-2.0"
+description = "Deriving plugin support for Postgres enum, domain, and composite types"
+repository = "https://github.com/sfackler/rust-postgres-derive"
+readme = "../README.md"
+keywords = ["database", "postgres", "postgresql", "sql"]
+
+[lib]
+proc-macro = true
+test = false
+
+[dependencies]
+syn = "0.11"
+quote = "0.3"
+
+[dev-dependencies]
+postgres = "0.13"

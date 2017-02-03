@@ -1,8 +1,8 @@
 language: rust
+cache: cargo
 sudo: false
 rust:
 - nightly
-- 1.13.0
+- 1.15.0
 script:
-- (test $TRAVIS_RUST_VERSION != "nightly" || env RUST_BACKTRACE=1 cargo test --manifest-path=postgres-derive/Cargo.toml)
-- cargo test --manifest-path=postgres-derive-codegen/test/Cargo.toml
+- cargo test
