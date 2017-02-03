@@ -5,7 +5,7 @@ authors = ["Steven Fackler <sfackler@palantir.com>"]
 license = "MIT/Apache-2.0"
 description = "Deriving plugin support for Postgres enum, domain, and composite types"
 repository = "https://github.com/sfackler/rust-postgres-derive"
-readme = "../README.md"
+readme = "README.md"
 keywords = ["database", "postgres", "postgresql", "sql"]
 
 [lib]
