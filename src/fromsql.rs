@@ -8,13 +8,13 @@ use enums::Variant;
 use overrides::Overrides;
 
 pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
-    let overrides = try!(Overrides::extract(&input.attrs));
+    let overrides = Overrides::extract(&input.attrs)?;
 
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
 
     let (accepts_body, to_sql_body) = match input.body {
         Body::Enum(ref variants) => {
-            let variants: Vec<Variant> = try!(variants.iter().map(Variant::parse).collect());
+            let variants = variants.iter().map(Variant::parse).collect::<Result<Vec<_>, _>>()?;
             (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
         }
         Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
@@ -22,7 +22,7 @@ pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
             (domain_accepts_body(field), domain_body(&input.ident, field))
         }
         Body::Struct(VariantData::Struct(ref fields)) => {
-            let fields: Vec<Field> = try!(fields.iter().map(Field::parse).collect());
+            let fields = fields.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
             (accepts::composite_body(&name, "FromSql", &fields),
              composite_body(&input.ident, &fields))
         }
@@ -59,7 +59,7 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
     let variant_idents = variants.iter().map(|v| &v.ident);
 
     quote! {
-        match try!(::std::str::from_utf8(buf)) {
+        match std::str::from_utf8(buf)? {
             #(
                 #variant_names => ::std::result::Result::Ok(#idents::#variant_idents),
             )*
@@ -93,7 +93,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
     quote! {
         fn read_be_i32(buf: &mut &[u8]) -> ::std::io::Result<i32> {
             let mut bytes = [0; 4];
-            try!(::std::io::Read::read_exact(buf, &mut bytes));
+            ::std::io::Read::read_exact(buf, &mut bytes)?;
             let num = ((bytes[0] as i32) << 24) |
                 ((bytes[1] as i32) << 16) |
                 ((bytes[2] as i32) << 8) |
@@ -109,7 +109,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
                              ::std::marker::Send>>
                          where T: ::postgres::types::FromSql
         {
-            let len = try!(read_be_i32(buf));
+            let len = read_be_i32(buf)?;
             let value = if len < 0 {
                 ::std::option::Option::None
             } else {
@@ -130,7 +130,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
         };
 
         let mut buf = buf;
-        let num_fields = try!(read_be_i32(&mut buf));
+        let num_fields = read_be_i32(&mut buf)?;
         if num_fields as usize != fields.len() {
             return ::std::result::Result::Err(
                 ::std::convert::Into::into(format!("invalid field count: {} vs {}", num_fields,
@@ -142,7 +142,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
         )*
 
         for field in fields {
-            let oid = try!(read_be_i32(&mut buf)) as u32;
+            let oid = read_be_i32(&mut buf)? as u32;
             if oid != field.type_().oid() {
                 return ::std::result::Result::Err(::std::convert::Into::into("unexpected OID"));
             }
@@ -151,7 +151,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
                 #(
                     #field_names => {
                         #temp_vars = ::std::option::Option::Some(
-                            try!(read_value(field.type_(), &mut buf)));
+                            read_value(field.type_(), &mut buf)?);
                     }
                 )*
                 _ => unreachable!(),

@@ -14,7 +14,7 @@ impl Variant {
             _ => return Err("non-C-like enums are not supported".to_owned()),
         }
 
-        let overrides = try!(Overrides::extract(&raw.attrs));
+        let overrides = Overrides::extract(&raw.attrs)?;
         Ok(Variant {
             ident: raw.ident.clone(),
             name: overrides.name.unwrap_or_else(|| raw.ident.to_string()),

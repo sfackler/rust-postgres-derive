@@ -10,7 +10,7 @@ pub struct Field {
 
 impl Field {
     pub fn parse(raw: &syn::Field) -> Result<Field, String> {
-        let overrides = try!(Overrides::extract(&raw.attrs));
+        let overrides = Overrides::extract(&raw.attrs)?;
 
         let ident = raw.ident.as_ref().unwrap().clone();
         Ok(Field {

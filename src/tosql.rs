@@ -8,13 +8,13 @@ use enums::Variant;
 use overrides::Overrides;
 
 pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
-    let overrides = try!(Overrides::extract(&input.attrs));
+    let overrides = Overrides::extract(&input.attrs)?;
 
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
 
     let (accepts_body, to_sql_body) = match input.body {
         Body::Enum(ref variants) => {
-            let variants: Vec<Variant> = try!(variants.iter().map(Variant::parse).collect());
+            let variants = variants.iter().map(Variant::parse).collect::<Result<Vec<_>, _>>()?;
             (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
         }
         Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
@@ -22,7 +22,7 @@ pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
             (domain_accepts_body(&name, &field), domain_body())
         }
         Body::Struct(VariantData::Struct(ref fields)) => {
-            let fields: Vec<Field> = try!(fields.iter().map(Field::parse).collect());
+            let fields = fields.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
             (accepts::composite_body(&name, "ToSql", &fields),
              composite_body(&fields))
         }
@@ -118,13 +118,13 @@ fn composite_body(fields: &[Field]) -> Tokens {
             _ => unreachable!(),
         };
 
-        try!(write_be_i32(buf, fields.len() as i32));
+        write_be_i32(buf, fields.len() as i32)?;
 
         for field in fields {
-            try!(write_be_i32(buf, field.type_().oid() as i32));
+            write_be_i32(buf, field.type_().oid() as i32)?;
 
             let base = buf.len();
-            try!(write_be_i32(buf, 0));
+            write_be_i32(buf, 0)?;
             let r = match field.name() {
                 #(
                     #field_names => {
@@ -136,7 +136,7 @@ fn composite_body(fields: &[Field]) -> Tokens {
                 _ => unreachable!(),
             };
 
-            let count = match try!(r) {
+            let count = match r? {
                 ::postgres::types::IsNull::Yes => -1,
                 ::postgres::types::IsNull::No => {
                     let len = buf.len() - base - 4;
@@ -148,7 +148,7 @@ fn composite_body(fields: &[Field]) -> Tokens {
                 }
             };
 
-            try!(write_be_i32(&mut &mut buf[base..base + 4], count));
+            write_be_i32(&mut &mut buf[base..base + 4], count)?;
         }
 
         ::std::result::Result::Ok(::postgres::types::IsNull::No)
