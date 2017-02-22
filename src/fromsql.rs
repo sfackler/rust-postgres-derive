@@ -36,8 +36,7 @@ pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
     let out = quote! {
         impl ::postgres::types::FromSql for #ident {
             fn from_sql(_type: &::postgres::types::Type,
-                        buf: &[u8],
-                        _info: &::postgres::types::SessionInfo)
+                        buf: &[u8])
                         -> ::std::result::Result<#ident,
                                                  ::std::boxed::Box<::std::error::Error +
                                                                    ::std::marker::Sync +
@@ -82,7 +81,7 @@ fn domain_accepts_body(field: &syn::Field) -> Tokens {
 fn domain_body(ident: &Ident, field: &syn::Field) -> Tokens {
     let ty = &field.ty;
     quote! {
-        <#ty as ::postgres::types::FromSql>::from_sql(_type, buf, _info).map(#ident)
+        <#ty as ::postgres::types::FromSql>::from_sql(_type, buf).map(#ident)
     }
 }
 
@@ -103,8 +102,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
         }
 
         fn read_value<T>(type_: &::postgres::types::Type,
-                         buf: &mut &[u8],
-                         info: &::postgres::types::SessionInfo)
+                         buf: &mut &[u8])
                          -> ::std::result::Result<T,
                              ::std::boxed::Box<::std::error::Error +
                              ::std::marker::Sync +
@@ -123,7 +121,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
                 *buf = tail;
                 ::std::option::Option::Some(&head[..])
             };
-            ::postgres::types::FromSql::from_sql_nullable(type_, value, info)
+            ::postgres::types::FromSql::from_sql_nullable(type_, value)
         }
 
         let fields = match *_type.kind() {
@@ -153,7 +151,7 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
                 #(
                     #field_names => {
                         #temp_vars = ::std::option::Option::Some(
-                            try!(read_value(field.type_(), &mut buf, _info)));
+                            try!(read_value(field.type_(), &mut buf)));
                     }
                 )*
                 _ => unreachable!(),

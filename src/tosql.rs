@@ -37,8 +37,7 @@ pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
         impl ::postgres::types::ToSql for #ident {
             fn to_sql(&self,
                       _type: &::postgres::types::Type,
-                      buf: &mut ::std::vec::Vec<u8>,
-                      _info: &::postgres::types::SessionInfo)
+                      buf: &mut ::std::vec::Vec<u8>)
                       -> ::std::result::Result<::postgres::types::IsNull,
                                                ::std::boxed::Box<::std::error::Error +
                                                                  ::std::marker::Sync +
@@ -98,7 +97,7 @@ fn domain_body() -> Tokens {
             _ => unreachable!(),
         };
 
-        ::postgres::types::ToSql::to_sql(&self.0, type_, buf, _info)
+        ::postgres::types::ToSql::to_sql(&self.0, type_, buf)
     }
 }
 
@@ -131,8 +130,7 @@ fn composite_body(fields: &[Field]) -> Tokens {
                     #field_names => {
                         ::postgres::types::ToSql::to_sql(&self.#field_idents,
                                                          field.type_(),
-                                                         buf,
-                                                         _info)
+                                                         buf)
                     }
                 )*
                 _ => unreachable!(),
