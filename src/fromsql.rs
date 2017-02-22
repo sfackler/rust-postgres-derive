@@ -59,7 +59,7 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
     let variant_idents = variants.iter().map(|v| &v.ident);
 
     quote! {
-        match std::str::from_utf8(buf)? {
+        match ::std::str::from_utf8(buf)? {
             #(
                 #variant_names => ::std::result::Result::Ok(#idents::#variant_idents),
             )*
