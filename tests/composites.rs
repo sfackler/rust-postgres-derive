@@ -17,12 +17,15 @@ fn defaults() {
         price: Option<f64>,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
-    conn.batch_execute("CREATE TYPE pg_temp.\"InventoryItem\" AS (
+    let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
+        .unwrap();
+    conn.batch_execute(
+        "CREATE TYPE pg_temp.\"InventoryItem\" AS (
                             name TEXT,
                             supplier_id INT,
                             price DOUBLE PRECISION
-                        );").unwrap();
+                        );",
+    ).unwrap();
 
     let item = InventoryItem {
         name: "foobar".to_owned(),
@@ -36,9 +39,14 @@ fn defaults() {
         price: None,
     };
 
-    util::test_type(&conn, "\"InventoryItem\"",
-                    &[(item, "ROW('foobar', 100, 15.50)"),
-                        (item_null, "ROW('foobar', 100, NULL)")]);
+    util::test_type(
+        &conn,
+        "\"InventoryItem\"",
+        &[
+            (item, "ROW('foobar', 100, 15.50)"),
+            (item_null, "ROW('foobar', 100, NULL)"),
+        ],
+    );
 }
 
 #[test]
@@ -54,12 +62,15 @@ fn name_overrides() {
         _price: Option<f64>,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
-    conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
+    let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
+        .unwrap();
+    conn.batch_execute(
+        "CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
                             price DOUBLE PRECISION
-                        );").unwrap();
+                        );",
+    ).unwrap();
 
     let item = InventoryItem {
         _name: "foobar".to_owned(),
@@ -73,9 +84,14 @@ fn name_overrides() {
         _price: None,
     };
 
-    util::test_type(&conn, "inventory_item",
-                    &[(item, "ROW('foobar', 100, 15.50)"),
-                        (item_null, "ROW('foobar', 100, NULL)")]);
+    util::test_type(
+        &conn,
+        "inventory_item",
+        &[
+            (item, "ROW('foobar', 100, 15.50)"),
+            (item_null, "ROW('foobar', 100, NULL)"),
+        ],
+    );
 }
 
 #[test]
@@ -87,12 +103,15 @@ fn wrong_name() {
         price: Option<f64>,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
-    conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
+    let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
+        .unwrap();
+    conn.batch_execute(
+        "CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
                             price DOUBLE PRECISION
-                        );").unwrap();
+                        );",
+    ).unwrap();
 
     let item = InventoryItem {
         name: "foobar".to_owned(),
@@ -100,7 +119,8 @@ fn wrong_name() {
         price: Some(15.50),
     };
 
-    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    let err = conn.execute("SELECT $1::inventory_item", &[&item])
+        .unwrap_err();
     assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
@@ -115,12 +135,15 @@ fn extra_field() {
         foo: i32,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
-    conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
+    let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
+        .unwrap();
+    conn.batch_execute(
+        "CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
                             price DOUBLE PRECISION
-                        );").unwrap();
+                        );",
+    ).unwrap();
 
     let item = InventoryItem {
         name: "foobar".to_owned(),
@@ -129,7 +152,8 @@ fn extra_field() {
         foo: 0,
     };
 
-    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    let err = conn.execute("SELECT $1::inventory_item", &[&item])
+        .unwrap_err();
     assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
@@ -142,19 +166,23 @@ fn missing_field() {
         supplier_id: i32,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
-    conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
+    let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
+        .unwrap();
+    conn.batch_execute(
+        "CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
                             price DOUBLE PRECISION
-                        );").unwrap();
+                        );",
+    ).unwrap();
 
     let item = InventoryItem {
         name: "foobar".to_owned(),
         supplier_id: 100,
     };
 
-    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    let err = conn.execute("SELECT $1::inventory_item", &[&item])
+        .unwrap_err();
     assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
@@ -168,12 +196,15 @@ fn wrong_type() {
         price: i32,
     }
 
-    let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
-    conn.batch_execute("CREATE TYPE pg_temp.inventory_item AS (
+    let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
+        .unwrap();
+    conn.batch_execute(
+        "CREATE TYPE pg_temp.inventory_item AS (
                             name TEXT,
                             supplier_id INT,
                             price DOUBLE PRECISION
-                        );").unwrap();
+                        );",
+    ).unwrap();
 
     let item = InventoryItem {
         name: "foobar".to_owned(),
@@ -181,6 +212,7 @@ fn wrong_type() {
         price: 0,
     };
 
-    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    let err = conn.execute("SELECT $1::inventory_item", &[&item])
+        .unwrap_err();
     assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
