@@ -1,6 +1,6 @@
 # postgres-derive
 
-[![Build Status](https://travis-ci.org/sfackler/rust-postgres-derive.svg?branch=master)](https://travis-ci.org/sfackler/rust-postgres-derive)
+[![CircleCI](https://circleci.com/gh/sfackler/rust-postgres-derive.svg?style=shield)](https://circleci.com/gh/sfackler/rust-postgres-derive)
 
 Syntax extensions to automatically derive `FromSql` and `ToSql` implementations for Postgres enum,
 domain, and composite types.
