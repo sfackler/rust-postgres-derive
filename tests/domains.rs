@@ -4,7 +4,6 @@ extern crate postgres_derive;
 extern crate postgres;
 
 use postgres::{Connection, TlsMode};
-use postgres::error::Error;
 use postgres::types::WrongType;
 
 mod util;
@@ -46,10 +45,8 @@ fn wrong_name() {
     conn.execute("CREATE DOMAIN pg_temp.session_id AS bytea CHECK(octet_length(VALUE) = 16);", &[])
         .unwrap();
 
-    match conn.execute("SELECT $1::session_id", &[&SessionId(vec![])]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::session_id", &[&SessionId(vec![])]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
 #[test]
@@ -62,8 +59,6 @@ fn wrong_type() {
     conn.execute("CREATE DOMAIN pg_temp.session_id AS bytea CHECK(octet_length(VALUE) = 16);", &[])
         .unwrap();
 
-    match conn.execute("SELECT $1::session_id", &[&SessionId(0)]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::session_id", &[&SessionId(0)]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }

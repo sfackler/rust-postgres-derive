@@ -4,7 +4,6 @@ extern crate postgres_derive;
 extern crate postgres;
 
 use postgres::{Connection, TlsMode};
-use postgres::error::Error;
 use postgres::types::WrongType;
 
 mod util;
@@ -55,10 +54,8 @@ fn wrong_name() {
     let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.foo AS ENUM ('Bar', 'Baz')", &[]).unwrap();
 
-    match conn.execute("SELECT $1::foo", &[&Foo::Bar]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::foo", &[&Foo::Bar]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
 #[test]
@@ -74,10 +71,8 @@ fn extra_variant() {
     let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.foo AS ENUM ('Bar', 'Baz')", &[]).unwrap();
 
-    match conn.execute("SELECT $1::foo", &[&Foo::Bar]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::foo", &[&Foo::Bar]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
 #[test]
@@ -91,8 +86,6 @@ fn missing_variant() {
     let conn = Connection::connect("postgres://postgres@localhost", TlsMode::None).unwrap();
     conn.execute("CREATE TYPE pg_temp.foo AS ENUM ('Bar', 'Baz')", &[]).unwrap();
 
-    match conn.execute("SELECT $1::foo", &[&Foo::Bar]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::foo", &[&Foo::Bar]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }

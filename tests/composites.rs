@@ -4,7 +4,6 @@ extern crate postgres_derive;
 extern crate postgres;
 
 use postgres::{Connection, TlsMode};
-use postgres::error::Error;
 use postgres::types::WrongType;
 
 mod util;
@@ -101,10 +100,8 @@ fn wrong_name() {
         price: Some(15.50),
     };
 
-    match conn.execute("SELECT $1::inventory_item", &[&item]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
 #[test]
@@ -132,10 +129,8 @@ fn extra_field() {
         foo: 0,
     };
 
-    match conn.execute("SELECT $1::inventory_item", &[&item]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
 #[test]
@@ -159,10 +154,8 @@ fn missing_field() {
         supplier_id: 100,
     };
 
-    match conn.execute("SELECT $1::inventory_item", &[&item]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
 
 #[test]
@@ -188,8 +181,6 @@ fn wrong_type() {
         price: 0,
     };
 
-    match conn.execute("SELECT $1::inventory_item", &[&item]) {
-        Err(Error::Conversion(ref r)) if r.is::<WrongType>() => {}
-        v => panic!("unexpected response {:?}", v),
-    }
+    let err = conn.execute("SELECT $1::inventory_item", &[&item]).unwrap_err();
+    assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
