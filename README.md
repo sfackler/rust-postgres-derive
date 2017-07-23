@@ -11,14 +11,13 @@ The generated code requires rust-postgres 0.14 or 0.15 and Rust 1.15.0 or higher
 
 Simply depend on the `postgres-derive` crate and register it as a plugin:
 
-
 Cargo.toml
 ```toml
 # ...
 
 [dependencies]
 postgres-derive = "0.3"
-postgres = "0.14"
+postgres = "0.15"
 ```
 
 lib.rs
