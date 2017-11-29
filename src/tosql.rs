@@ -10,20 +10,21 @@ use overrides::Overrides;
 pub fn expand_derive_tosql(input: &MacroInput) -> Result<String, String> {
     let overrides = Overrides::extract(&input.attrs)?;
 
+    let schema = overrides.schema.as_ref().map(|s| &**s);
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
 
     let (accepts_body, to_sql_body) = match input.body {
         Body::Enum(ref variants) => {
             let variants = variants.iter().map(Variant::parse).collect::<Result<Vec<_>, _>>()?;
-            (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
+            (accepts::enum_body(schema, &name, &variants), enum_body(&input.ident, &variants))
         }
         Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
             let field = &fields[0];
-            (domain_accepts_body(&name, &field), domain_body())
+            (domain_accepts_body(schema, &name, &field), domain_body())
         }
         Body::Struct(VariantData::Struct(ref fields)) => {
             let fields = fields.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
-            (accepts::composite_body(&name, "ToSql", &fields),
+            (accepts::composite_body(schema, &name, "ToSql", &fields),
              composite_body(&fields))
         }
         _ => {
@@ -73,13 +74,13 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
     }
 }
 
-fn domain_accepts_body(name: &str, field: &syn::Field) -> Tokens {
+fn domain_accepts_body(schema: Option<&str>, name: &str, field: &syn::Field) -> Tokens {
     let ty = &field.ty;
 
+    let base = accepts::base_body(schema, name);
+
     quote! {
-        if type_.name() != #name {
-            return false;
-        }
+        #base
 
         match *type_.kind() {
             ::postgres::types::Kind::Domain(ref type_) => {

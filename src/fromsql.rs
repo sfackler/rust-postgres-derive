@@ -10,12 +10,13 @@ use overrides::Overrides;
 pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
     let overrides = Overrides::extract(&input.attrs)?;
 
+    let schema = overrides.schema.as_ref().map(|s| &**s);
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
 
     let (accepts_body, to_sql_body) = match input.body {
         Body::Enum(ref variants) => {
             let variants = variants.iter().map(Variant::parse).collect::<Result<Vec<_>, _>>()?;
-            (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
+            (accepts::enum_body(schema, &name, &variants), enum_body(&input.ident, &variants))
         }
         Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
             let field = &fields[0];
@@ -23,7 +24,7 @@ pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
         }
         Body::Struct(VariantData::Struct(ref fields)) => {
             let fields = fields.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
-            (accepts::composite_body(&name, "FromSql", &fields),
+            (accepts::composite_body(schema, &name, "FromSql", &fields),
              composite_body(&input.ident, &fields))
         }
         _ => {
