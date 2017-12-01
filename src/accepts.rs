@@ -5,28 +5,15 @@ use quote::Tokens;
 use enums::Variant;
 use composites::Field;
 
-pub fn base_body(schema: Option<&str>, name: &str) -> Tokens {
-    let schema_check = match schema {
-        Some(schema) => {
-            quote! {
-                if type_.schema() != #schema {
-                    return false;
-                }
-            }
-        }
-        None => quote!({})
-    };
-
+pub fn base_body(schema: &str, name: &str) -> Tokens {
     quote! {
-        #schema_check
-
-        if type_.name() != #name {
+        if type_.schema() != #schema || type_.name() != #name {
             return false;
         }
     }
 }
 
-pub fn enum_body(schema: Option<&str>, name: &str, variants: &[Variant]) -> Tokens {
+pub fn enum_body(schema: &str, name: &str, variants: &[Variant]) -> Tokens {
     let num_variants = variants.len();
     let variant_names = variants.iter().map(|v| &v.name);
 
@@ -55,7 +42,7 @@ pub fn enum_body(schema: Option<&str>, name: &str, variants: &[Variant]) -> Toke
     }
 }
 
-pub fn composite_body(schema: Option<&str>, name: &str, trait_: &str, fields: &[Field]) -> Tokens {
+pub fn composite_body(schema: &str, name: &str, trait_: &str, fields: &[Field]) -> Tokens {
     let num_fields = fields.len();
     let trait_ = Ident::new(trait_);
     let traits = iter::repeat(&trait_);

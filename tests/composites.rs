@@ -11,6 +11,7 @@ mod util;
 #[test]
 fn defaults() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
+    #[postgres(schema = "pg_temp")]
     struct InventoryItem {
         name: String,
         supplier_id: i32,
@@ -52,7 +53,7 @@ fn defaults() {
 #[test]
 fn name_overrides() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
-    #[postgres(name = "inventory_item")]
+    #[postgres(schema = "pg_temp", name = "inventory_item")]
     struct InventoryItem {
         #[postgres(name = "name")]
         _name: String,
@@ -97,6 +98,7 @@ fn name_overrides() {
 #[test]
 fn wrong_name() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
+    #[postgres(schema = "pg_temp")]
     struct InventoryItem {
         name: String,
         supplier_id: i32,
@@ -127,7 +129,7 @@ fn wrong_name() {
 #[test]
 fn extra_field() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
-    #[postgres(name = "inventory_item")]
+    #[postgres(schema = "pg_temp", name = "inventory_item")]
     struct InventoryItem {
         name: String,
         supplier_id: i32,
@@ -160,7 +162,7 @@ fn extra_field() {
 #[test]
 fn missing_field() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
-    #[postgres(name = "inventory_item")]
+    #[postgres(schema = "pg_temp", name = "inventory_item")]
     struct InventoryItem {
         name: String,
         supplier_id: i32,
@@ -189,7 +191,7 @@ fn missing_field() {
 #[test]
 fn wrong_type() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
-    #[postgres(name = "inventory_item")]
+    #[postgres(schema = "pg_temp", name = "inventory_item")]
     struct InventoryItem {
         name: String,
         supplier_id: i32,

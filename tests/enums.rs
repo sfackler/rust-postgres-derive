@@ -11,6 +11,7 @@ mod util;
 #[test]
 fn defaults() {
     #[derive(Debug, ToSql, FromSql, PartialEq)]
+    #[postgres(schema = "pg_temp")]
     enum Foo {
         Bar,
         Baz,
@@ -31,7 +32,7 @@ fn defaults() {
 #[test]
 fn name_overrides() {
     #[derive(Debug, ToSql, FromSql, PartialEq)]
-    #[postgres(name = "mood")]
+    #[postgres(schema = "pg_temp", name = "mood")]
     enum Mood {
         #[postgres(name = "sad")]
         Sad,
@@ -62,6 +63,7 @@ fn name_overrides() {
 #[test]
 fn wrong_name() {
     #[derive(Debug, ToSql, FromSql, PartialEq)]
+    #[postgres(schema = "pg_temp")]
     enum Foo {
         Bar,
         Baz,
@@ -79,7 +81,7 @@ fn wrong_name() {
 #[test]
 fn extra_variant() {
     #[derive(Debug, ToSql, FromSql, PartialEq)]
-    #[postgres(name = "foo")]
+    #[postgres(schema = "pg_temp", name = "foo")]
     enum Foo {
         Bar,
         Baz,
@@ -98,7 +100,7 @@ fn extra_variant() {
 #[test]
 fn missing_variant() {
     #[derive(Debug, ToSql, FromSql, PartialEq)]
-    #[postgres(name = "foo")]
+    #[postgres(schema = "pg_temp", name = "foo")]
     enum Foo {
         Bar,
     }
