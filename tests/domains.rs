@@ -11,6 +11,7 @@ mod util;
 #[test]
 fn defaults() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
+    #[postgres(schema = "pg_temp")]
     struct SessionId(Vec<u8>);
 
     let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
@@ -35,7 +36,7 @@ fn defaults() {
 #[test]
 fn name_overrides() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
-    #[postgres(name = "session_id")]
+    #[postgres(schema = "pg_temp", name = "session_id")]
     struct SessionId(Vec<u8>);
 
     let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
@@ -60,6 +61,7 @@ fn name_overrides() {
 #[test]
 fn wrong_name() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
+    #[postgres(schema = "pg_temp")]
     struct SessionId(Vec<u8>);
 
     let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
@@ -77,7 +79,7 @@ fn wrong_name() {
 #[test]
 fn wrong_type() {
     #[derive(FromSql, ToSql, Debug, PartialEq)]
-    #[postgres(name = "session_id")]
+    #[postgres(schema = "pg_temp", name = "session_id")]
     struct SessionId(i32);
 
     let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)

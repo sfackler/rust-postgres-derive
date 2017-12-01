@@ -64,7 +64,7 @@ The implementations will expect exact matches between the type names and variant
 `#[postgres(...)]` attribute can be used to adjust the names used on the Postgres side:
 
 ```sql
-CREATE TYPE mood AS ENUM (
+CREATE TYPE people.mood AS ENUM (
     'sad',
     'ok',
     'happy'
@@ -73,7 +73,7 @@ CREATE TYPE mood AS ENUM (
 
 ```rust
 #[derive(Debug, ToSql, FromSql)]
-#[postgres(name = "mood")]
+#[postgres(schema = "people", name = "mood")]
 enum Mood {
     #[postgres(name = "sad")]
     Sad,
@@ -101,12 +101,12 @@ As above, the implementations will expect an exact match between the Rust and Po
 and the `#[postgres(...)]` attribute can be used to adjust that behavior:
 
 ```sql
-CREATE DOMAIN session_id AS BYTEA CHECK(octet_length(VALUE) = 16);
+CREATE DOMAIN accounts.session_id AS BYTEA CHECK(octet_length(VALUE) = 16);
 ```
 
 ```rust
 #[derive(Debug, FromSql, ToSql)]
-#[postgres(name = "session_id")]
+#[postgres(schema = "accounts", name = "session_id")]
 struct SessionId(Vec<u8>);
 ```
 
@@ -136,7 +136,7 @@ types and fields, which can be adjusted via the `#[postgres(...)]` attribute:
 
 
 ```sql
-CREATE TYPE inventory_item AS (
+CREATE TYPE shop.inventory_item AS (
     name TEXT,
     supplier_id INT,
     the_price DOUBLE PRECISION
@@ -145,7 +145,7 @@ CREATE TYPE inventory_item AS (
 
 ```rust
 #[derive(Debug, FromSql, ToSql)]
-#[postgres(name = "inventory_item")]
+#[postgres(schema = "shop", name = "inventory_item")]
 struct InventoryItem {
     name: String,
     supplier_id: i32,
