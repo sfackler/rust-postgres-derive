@@ -1,4 +1,4 @@
-use syn::{self, Ident, VariantData};
+use syn::{self, Ident, Fields};
 
 use overrides::Overrides;
 
@@ -9,8 +9,8 @@ pub struct Variant {
 
 impl Variant {
     pub fn parse(raw: &syn::Variant) -> Result<Variant, String> {
-        match raw.data {
-            VariantData::Unit => {}
+        match raw.fields {
+            Fields::Unit => {}
             _ => return Err("non-C-like enums are not supported".to_owned()),
         }
 

@@ -1,4 +1,4 @@
-use syn::{Attribute, MetaItem, NestedMetaItem, Lit};
+use syn::{Attribute, Meta, NestedMeta, Lit};
 
 pub struct Overrides {
     pub name: Option<String>,
@@ -11,24 +11,29 @@ impl Overrides {
         };
 
         for attr in attrs {
-            if attr.value.name() != "postgres" {
+            let attr = match attr.interpret_meta() {
+                Some(meta) => meta,
+                None => continue,
+            };
+
+            if attr.name() != "postgres" {
                 continue;
             }
 
-            let list = match attr.value {
-                MetaItem::List(_, ref list) => list,
+            let list = match attr {
+                Meta::List(ref list) => list,
                 _ => return Err("expected a #[postgres(...)]".to_owned()),
             };
 
-            for item in list {
+            for item in &list.nested {
                 match *item {
-                    NestedMetaItem::MetaItem(MetaItem::NameValue(ref name, ref value)) => {
-                        if name != "name" {
-                            return Err(format!("unknown override `{}`", name));
+                    NestedMeta::Meta(Meta::NameValue(ref meta)) => {
+                        if meta.ident.as_ref() != "name" {
+                            return Err(format!("unknown override `{}`", meta.ident.as_ref()));
                         }
 
-                        let value = match *value {
-                            Lit::Str(ref s, _) => s.to_owned(),
+                        let value = match meta.lit {
+                            Lit::Str(ref s) => s.value(),
                             _ => return Err("expected a string literal".to_owned()),
                         };
 

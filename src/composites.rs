@@ -1,11 +1,11 @@
-use syn::{self, Ident, Ty};
+use syn::{self, Ident, Type};
 
 use overrides::Overrides;
 
 pub struct Field {
     pub name: String,
     pub ident: Ident,
-    pub type_: Ty,
+    pub type_: Type,
 }
 
 impl Field {
