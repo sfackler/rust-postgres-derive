@@ -1,5 +1,5 @@
 use std::iter;
-use syn::{self, Body, Ident, MacroInput, VariantData};
+use syn::{self, Ident, DeriveInput, Data, DataStruct, Fields};
 use quote::Tokens;
 
 use accepts;
@@ -7,22 +7,22 @@ use composites::Field;
 use enums::Variant;
 use overrides::Overrides;
 
-pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
+pub fn expand_derive_fromsql(input: DeriveInput) -> Result<Tokens, String> {
     let overrides = Overrides::extract(&input.attrs)?;
 
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
 
-    let (accepts_body, to_sql_body) = match input.body {
-        Body::Enum(ref variants) => {
-            let variants = variants.iter().map(Variant::parse).collect::<Result<Vec<_>, _>>()?;
+    let (accepts_body, to_sql_body) = match input.data {
+        Data::Enum(ref data) => {
+            let variants = data.variants.iter().map(Variant::parse).collect::<Result<Vec<_>, _>>()?;
             (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
         }
-        Body::Struct(VariantData::Tuple(ref fields)) if fields.len() == 1 => {
-            let field = &fields[0];
+        Data::Struct(DataStruct { fields: Fields::Unnamed(ref fields), .. }) if fields.unnamed.len() == 1 => {
+            let field = fields.unnamed.first().unwrap().into_value();
             (domain_accepts_body(field), domain_body(&input.ident, field))
         }
-        Body::Struct(VariantData::Struct(ref fields)) => {
-            let fields = fields.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
+        Data::Struct(DataStruct { fields: Fields::Named(ref fields), .. }) => {
+            let fields = fields.named.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
             (accepts::composite_body(&name, "FromSql", &fields),
              composite_body(&input.ident, &fields))
         }
@@ -50,7 +50,7 @@ pub fn expand_derive_fromsql(input: &MacroInput) -> Result<String, String> {
         }
     };
 
-    Ok(out.to_string())
+    Ok(out)
 }
 
 fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
@@ -86,7 +86,7 @@ fn domain_body(ident: &Ident, field: &syn::Field) -> Tokens {
 }
 
 fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
-    let temp_vars = &fields.iter().map(|f| Ident::new(format!("__{}", f.ident))).collect::<Vec<_>>();
+    let temp_vars = &fields.iter().map(|f| Ident::from(format!("__{}", f.ident))).collect::<Vec<_>>();
     let field_names = &fields.iter().map(|f| &f.name).collect::<Vec<_>>();
     let field_idents = &fields.iter().map(|f| &f.ident).collect::<Vec<_>>();
 

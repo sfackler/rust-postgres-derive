@@ -36,7 +36,7 @@ pub fn enum_body(name: &str, variants: &[Variant]) -> Tokens {
 
 pub fn composite_body(name: &str, trait_: &str, fields: &[Field]) -> Tokens {
     let num_fields = fields.len();
-    let trait_ = Ident::new(trait_);
+    let trait_ = Ident::from(trait_);
     let traits = iter::repeat(&trait_);
     let field_names = fields.iter().map(|f| &f.name);
     let field_types = fields.iter().map(|f| &f.type_);
