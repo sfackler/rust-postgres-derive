@@ -13,8 +13,8 @@ proc-macro = true
 test = false
 
 [dependencies]
-syn = "0.12"
-quote = "0.4"
+syn = "0.13"
+quote = "0.5"
 
 [dev-dependencies]
 postgres = "0.15.1"
