@@ -1,5 +1,6 @@
+use proc_macro2::Span;
 use std::iter;
-use syn::{self, Ident, DeriveInput, Data, DataStruct, Fields};
+use syn::{self, Ident, DeriveInput, Data, DataStruct, Fields, Lifetime};
 use quote::Tokens;
 
 use accepts;
@@ -12,6 +13,8 @@ pub fn expand_derive_fromsql(input: DeriveInput) -> Result<Tokens, String> {
 
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
 
+    let trait_lifetime = Lifetime::new("'from_sql", Span::call_site());
+
     let (accepts_body, to_sql_body) = match input.data {
         Data::Enum(ref data) => {
             let variants = data.variants.iter().map(Variant::parse).collect::<Result<Vec<_>, _>>()?;
@@ -23,18 +26,18 @@ pub fn expand_derive_fromsql(input: DeriveInput) -> Result<Tokens, String> {
         }
         Data::Struct(DataStruct { fields: Fields::Named(ref fields), .. }) => {
             let fields = fields.named.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
-            (accepts::composite_body(&name, "FromSql", &fields),
-             composite_body(&input.ident, &fields))
+            (accepts::composite_body(&name, "FromSql", Some(trait_lifetime), &fields),
+             composite_body(&input.ident, trait_lifetime, &fields))
         }
         _ => {
-            return Err("#[derive(ToSql)] may only be applied to structs, single field tuple \
+            return Err("#[derive(FromSql)] may only be applied to structs, single field tuple \
                         structs, and enums".to_owned())
         }
     };
 
     let ident = &input.ident;
     let out = quote! {
-        impl ::postgres::types::FromSql for #ident {
+        impl<#trait_lifetime> ::postgres::types::FromSql<#trait_lifetime> for #ident {
             fn from_sql(_type: &::postgres::types::Type,
                         buf: &[u8])
                         -> ::std::result::Result<#ident,
@@ -85,7 +88,7 @@ fn domain_body(ident: &Ident, field: &syn::Field) -> Tokens {
     }
 }
 
-fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
+fn composite_body(ident: &Ident, lifetime: syn::Lifetime, fields: &[Field]) -> Tokens {
     let temp_vars = &fields.iter().map(|f| Ident::from(format!("__{}", f.ident))).collect::<Vec<_>>();
     let field_names = &fields.iter().map(|f| &f.name).collect::<Vec<_>>();
     let field_idents = &fields.iter().map(|f| &f.ident).collect::<Vec<_>>();
@@ -101,13 +104,13 @@ fn composite_body(ident: &Ident, fields: &[Field]) -> Tokens {
             ::std::result::Result::Ok(num)
         }
 
-        fn read_value<T>(type_: &::postgres::types::Type,
-                         buf: &mut &[u8])
+        fn read_value<#lifetime, T>(type_: &::postgres::types::Type,
+                         buf: &#lifetime mut &[u8])
                          -> ::std::result::Result<T,
                              ::std::boxed::Box<::std::error::Error +
                              ::std::marker::Sync +
                              ::std::marker::Send>>
-                         where T: ::postgres::types::FromSql
+                         where T: ::postgres::types::FromSql<#lifetime>
         {
             let len = read_be_i32(buf)?;
             let value = if len < 0 {

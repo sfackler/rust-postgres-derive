@@ -23,7 +23,7 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<Tokens, String> {
         }
         Data::Struct(DataStruct { fields: Fields::Named(ref fields), .. }) => {
             let fields = fields.named.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
-            (accepts::composite_body(&name, "ToSql", &fields),
+            (accepts::composite_body(&name, "ToSql", None, &fields),
              composite_body(&fields))
         }
         _ => {

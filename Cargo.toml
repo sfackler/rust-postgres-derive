@@ -13,8 +13,9 @@ proc-macro = true
 test = false
 
 [dependencies]
+proc-macro2 = "0.3"
 syn = "0.13"
 quote = "0.5"
 
 [dev-dependencies]
-postgres = "0.15.1"
+postgres = { git = "https://github.com/sfackler/rust-postgres" }
