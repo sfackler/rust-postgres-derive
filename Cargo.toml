@@ -1,6 +1,7 @@
 [package]
 name = "postgres-derive"
 version = "0.3.3"
+edition = "2018"
 authors = ["Steven Fackler <sfackler@palantir.com>"]
 license = "MIT/Apache-2.0"
 description = "Deriving plugin support for Postgres enum, domain, and composite types"

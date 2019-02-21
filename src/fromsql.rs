@@ -3,10 +3,10 @@ use std::iter;
 use syn::{self, Ident, DeriveInput, Data, DataStruct, Fields, Lifetime};
 use quote::Tokens;
 
-use accepts;
-use composites::Field;
-use enums::Variant;
-use overrides::Overrides;
+use crate::accepts;
+use crate::composites::Field;
+use crate::enums::Variant;
+use crate::overrides::Overrides;
 
 pub fn expand_derive_fromsql(input: DeriveInput) -> Result<Tokens, String> {
     let overrides = Overrides::extract(&input.attrs)?;

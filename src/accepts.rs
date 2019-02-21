@@ -2,8 +2,8 @@ use std::iter;
 use syn::{Ident, Lifetime};
 use quote::Tokens;
 
-use enums::Variant;
-use composites::Field;
+use crate::enums::Variant;
+use crate::composites::Field;
 
 pub fn enum_body(name: &str, variants: &[Variant]) -> Tokens {
     let num_variants = variants.len();
