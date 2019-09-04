@@ -2,12 +2,14 @@ use syn::{Attribute, Meta, NestedMeta, Lit};
 
 pub struct Overrides {
     pub name: Option<String>,
+    pub transparent: bool,
 }
 
 impl Overrides {
     pub fn extract(attrs: &[Attribute]) -> Result<Overrides, String> {
         let mut overrides = Overrides {
             name: None,
+            transparent: false,
         };
 
         for attr in attrs {
@@ -39,9 +41,20 @@ impl Overrides {
 
                         overrides.name = Some(value);
                     },
-                    _ => return Err("expected a name-value meta item".to_owned()),
+                    NestedMeta::Meta(Meta::Word(ref meta)) => {
+                        if meta.as_ref() == "transparent" {
+                            overrides.transparent = true;
+                        } else {
+                            return Err(format!("unknown override `{}`", meta.as_ref()));
+                        }
+                    }
+                    _ => return Err("expected a name-value or word meta item".to_owned()),
                 }
             }
+        }
+
+        if overrides.name.is_some() && overrides.transparent {
+            return Err("overrides `name` and `transparent` may not be used at the same time".to_owned())
         }
 
         Ok(overrides)
