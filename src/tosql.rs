@@ -11,6 +11,7 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<Tokens, String> {
     let overrides = Overrides::extract(&input.attrs)?;
 
     let name = overrides.name.unwrap_or_else(|| input.ident.to_string());
+    let transparent = overrides.transparent;
 
     let (accepts_body, to_sql_body) = match input.data {
         Data::Enum(ref data) => {
@@ -18,8 +19,13 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<Tokens, String> {
             (accepts::enum_body(&name, &variants), enum_body(&input.ident, &variants))
         }
         Data::Struct(DataStruct { fields: Fields::Unnamed(ref fields), .. }) if fields.unnamed.len() == 1 => {
-            let field = fields.unnamed.first().unwrap().into_value();
-            (domain_accepts_body(&name, &field), domain_body())
+            if transparent {
+                let field = fields.unnamed.first().unwrap().into_value();
+                (transparent_accepts_body(&field), transparent_body())
+            } else {
+                let field = fields.unnamed.first().unwrap().into_value();
+                (domain_accepts_body(&name, &field), domain_body())
+            }
         }
         Data::Struct(DataStruct { fields: Fields::Named(ref fields), .. }) => {
             let fields = fields.named.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
@@ -70,6 +76,20 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
 
         buf.extend_from_slice(s.as_bytes());
         ::std::result::Result::Ok(::postgres::types::IsNull::No)
+    }
+}
+
+fn transparent_accepts_body(field: &syn::Field) -> Tokens {
+    let ty = &field.ty;
+
+    quote! {
+        <#ty as ::postgres::types::ToSql>::accepts(type_)
+    }
+}
+
+fn transparent_body() -> Tokens {
+    quote! {
+        ::postgres::types::ToSql::to_sql(&self.0, _type, buf)
     }
 }
 
