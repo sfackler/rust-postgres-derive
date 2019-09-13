@@ -5,6 +5,23 @@ use quote::Tokens;
 use enums::Variant;
 use composites::Field;
 
+pub fn domain_body(name: &str, field: &syn::Field) -> Tokens {
+    let ty = &field.ty;
+
+    quote! {
+        if type_.name() != #name {
+            return false;
+        }
+
+        match *type_.kind() {
+            ::postgres::types::Kind::Domain(ref type_) => {
+                <#ty as ::postgres::types::ToSql>::accepts(type_)
+            }
+            _ => false,
+        }
+    }
+}
+
 pub fn enum_body(name: &str, variants: &[Variant]) -> Tokens {
     let num_variants = variants.len();
     let variant_names = variants.iter().map(|v| &v.name);
