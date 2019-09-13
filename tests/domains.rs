@@ -91,3 +91,35 @@ fn wrong_type() {
         .unwrap_err();
     assert!(err.as_conversion().unwrap().is::<WrongType>());
 }
+
+#[test]
+fn domain_in_composite() {
+    #[derive(FromSql, ToSql, Debug, PartialEq)]
+    #[postgres(name = "domain")]
+    struct Domain(String);
+
+    #[derive(FromSql, ToSql, Debug, PartialEq)]
+    #[postgres(name = "composite")]
+    struct Composite {
+        domain: Domain,
+    }
+
+    let conn = Connection::connect("postgres://postgres:password@localhost", TlsMode::None)
+        .unwrap();
+    conn.batch_execute(
+        "
+            CREATE DOMAIN pg_temp.domain AS TEXT;\
+            CREATE TYPE pg_temp.composite AS (
+                domain domain
+            );
+        ",
+    ).unwrap();
+
+    util::test_type(
+        &conn,
+        "composite",
+        &[
+            (Composite { domain: Domain("hello".to_string()) }, "ROW('hello')"),
+        ],
+    );
+}

@@ -1,5 +1,5 @@
 use std::iter;
-use syn::{self, Ident, DeriveInput, Data, DataStruct, Fields};
+use syn::{Ident, DeriveInput, Data, DataStruct, Fields};
 use quote::Tokens;
 
 use accepts;
@@ -19,7 +19,7 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<Tokens, String> {
         }
         Data::Struct(DataStruct { fields: Fields::Unnamed(ref fields), .. }) if fields.unnamed.len() == 1 => {
             let field = fields.unnamed.first().unwrap().into_value();
-            (domain_accepts_body(&name, &field), domain_body())
+            (accepts::domain_body(&name, &field), domain_body())
         }
         Data::Struct(DataStruct { fields: Fields::Named(ref fields), .. }) => {
             let fields = fields.named.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
@@ -70,23 +70,6 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
 
         buf.extend_from_slice(s.as_bytes());
         ::std::result::Result::Ok(::postgres::types::IsNull::No)
-    }
-}
-
-fn domain_accepts_body(name: &str, field: &syn::Field) -> Tokens {
-    let ty = &field.ty;
-
-    quote! {
-        if type_.name() != #name {
-            return false;
-        }
-
-        match *type_.kind() {
-            ::postgres::types::Kind::Domain(ref type_) => {
-                <#ty as ::postgres::types::ToSql>::accepts(type_)
-            }
-            _ => false,
-        }
     }
 }
 

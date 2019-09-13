@@ -19,7 +19,7 @@ pub fn expand_derive_fromsql(input: DeriveInput) -> Result<Tokens, String> {
         }
         Data::Struct(DataStruct { fields: Fields::Unnamed(ref fields), .. }) if fields.unnamed.len() == 1 => {
             let field = fields.unnamed.first().unwrap().into_value();
-            (domain_accepts_body(field), domain_body(&input.ident, field))
+            (domain_accepts_body(&name, field), domain_body(&input.ident, field))
         }
         Data::Struct(DataStruct { fields: Fields::Named(ref fields), .. }) => {
             let fields = fields.named.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
@@ -71,10 +71,17 @@ fn enum_body(ident: &Ident, variants: &[Variant]) -> Tokens {
     }
 }
 
-fn domain_accepts_body(field: &syn::Field) -> Tokens {
+// Domains are sometimes but not always just represented by the bare type (!?)
+fn domain_accepts_body(name: &str, field: &syn::Field) -> Tokens {
     let ty = &field.ty;
+    let normal_body = accepts::domain_body(name, field);
+
     quote! {
-        <#ty as ::postgres::types::FromSql>::accepts(type_)
+        if <#ty as ::postgres::types::FromSql>::accepts(type_) {
+            return true;
+        }
+
+        #normal_body
     }
 }
 
