@@ -2,10 +2,10 @@ use std::iter;
 use syn::{Ident, DeriveInput, Data, DataStruct, Fields};
 use quote::Tokens;
 
-use accepts;
-use composites::Field;
-use enums::Variant;
-use overrides::Overrides;
+use crate::accepts;
+use crate::composites::Field;
+use crate::enums::Variant;
+use crate::overrides::Overrides;
 
 pub fn expand_derive_tosql(input: DeriveInput) -> Result<Tokens, String> {
     let overrides = Overrides::extract(&input.attrs)?;
@@ -23,7 +23,7 @@ pub fn expand_derive_tosql(input: DeriveInput) -> Result<Tokens, String> {
         }
         Data::Struct(DataStruct { fields: Fields::Named(ref fields), .. }) => {
             let fields = fields.named.iter().map(Field::parse).collect::<Result<Vec<_>, _>>()?;
-            (accepts::composite_body(&name, "ToSql", &fields),
+            (accepts::composite_body(&name, "ToSql", None, &fields),
              composite_body(&fields))
         }
         _ => {

@@ -1,10 +1,10 @@
-use postgres::types::{FromSql, ToSql};
+use postgres::types::{FromSqlOwned, ToSql};
 use postgres::Connection;
 use std::fmt;
 
 pub fn test_type<T, S>(conn: &Connection, sql_type: &str, checks: &[(T, S)])
 where
-    T: PartialEq + FromSql + ToSql,
+    T: PartialEq + FromSqlOwned + ToSql,
     S: fmt::Display,
 {
     for &(ref val, ref repr) in checks.iter() {

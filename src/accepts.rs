@@ -1,9 +1,9 @@
 use std::iter;
-use syn::Ident;
+use syn::{Ident, Lifetime};
 use quote::Tokens;
 
-use enums::Variant;
-use composites::Field;
+use crate::enums::Variant;
+use crate::composites::Field;
 
 pub fn domain_body(name: &str, field: &syn::Field) -> Tokens {
     let ty = &field.ty;
@@ -51,12 +51,16 @@ pub fn enum_body(name: &str, variants: &[Variant]) -> Tokens {
     }
 }
 
-pub fn composite_body(name: &str, trait_: &str, fields: &[Field]) -> Tokens {
+pub fn composite_body(name: &str, trait_: &str, lifetime: Option<Lifetime>, fields: &[Field]) -> Tokens {
     let num_fields = fields.len();
     let trait_ = Ident::from(trait_);
-    let traits = iter::repeat(&trait_);
     let field_names = fields.iter().map(|f| &f.name);
     let field_types = fields.iter().map(|f| &f.type_);
+
+    let trait_tokens = iter::repeat(match lifetime {
+        Some(lifetime) => quote!{ ::postgres::types::#trait_<#lifetime> },
+        None => quote! { ::postgres::types::#trait_ },
+    });
 
     quote! {
         if type_.name() != #name {
@@ -73,7 +77,7 @@ pub fn composite_body(name: &str, trait_: &str, fields: &[Field]) -> Tokens {
                     match f.name() {
                         #(
                             #field_names => {
-                                <#field_types as ::postgres::types::#traits>::accepts(f.type_())
+                                <#field_types as #trait_tokens>::accepts(f.type_())
                             }
                         )*
                         _ => false,
